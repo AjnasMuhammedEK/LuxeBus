@@ -93,10 +93,25 @@ export class AuthController implements IAuthController {
         try {
             const {email} = req.body
 
+
             const response = await this.authService.userForgotPasswordEmailVerify({email})
             res.status(200).json(response)
         } catch (error) {
-            
+            console.log('ERROR in AuthCOntroller userForgottPasswordEmailVerify :',error) 
+            next(error)       
+        }
+    }
+
+    userVerifyForgotPasswordOtp = async (req: Request, res: Response, next: NextFunction)=> {
+        try {
+            const {email , otp} = req.body
+            console.log('emai ===',email , otp)
+            const response = await this.authService.userVerifyForgotPasswordOtp({email,otp})
+            console.log('Response from Auth controller')
+            res.status(200).json(response)
+        } catch (error) {
+            console.log('ERROR in AuthCOntroller userVerifyForgotPasswordOtp :',error) 
+            next(error)         
         }
     }
 

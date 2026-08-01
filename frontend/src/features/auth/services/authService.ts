@@ -2,7 +2,7 @@ import api from '@/services/api'
 
 import { AUTH_BASE_ROUTE } from '@/constants/apiRoutes'
 import type { UserRegisterFormData , UserLoginFormData, OperatorLoginFormData , userForgotPasswordEmailVeryfication ,UserVerifyForgotPasswordOtp } from '@/types/auth.types'
-import { data } from 'react-router-dom'
+
  
 export const registerUser = async (data:UserRegisterFormData) => {
     const response = await api.post(`/${AUTH_BASE_ROUTE}/register`,data)

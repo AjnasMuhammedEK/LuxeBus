@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 
 import {forgotPasswordSchema,getValidationErrors,} from '@/features/auth/passenger/validation/passengerAuthValidation'
 import { userForgotPasswordEmailVerification , userVerifyForgotPasswordOtp} from '../../services/authService'
- import { object } from 'zod'
+ 
 
 type ForgotPasswordFormData = { email: string }
 type FormErrors = Partial<Record<keyof ForgotPasswordFormData, string>>
@@ -138,7 +138,7 @@ const ForgotPasswordSection = () => {
 
   const handleVerifyOtp = async () => {
     const code = otp.join('')
-
+    console.log(code)
     if (code.length !== OTP_LENGTH) {
       toast.error('Please enter the 6 digit verification code')
       return
@@ -147,8 +147,8 @@ const ForgotPasswordSection = () => {
     setIsVerifying(true)
     try {
       const response = await userVerifyForgotPasswordOtp({ email: formData.email, otp: code })
-      toast.success(response?.message || 'Code verified')
-      navigate('/reset-password', { state: { email: formData.email, otp: code } })
+      toast.success(response?.message || 'OTP_verified')
+      navigate('/resetPassword', { state: { email: formData.email, otp: code } })
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error?.message || 'Invalid or expired code')
     } finally {
@@ -254,7 +254,7 @@ const ForgotPasswordSection = () => {
                   {otp.map((digit, index) => (
                     <input
                       key={index}
-                      ref={(el) => (otpInputRefs.current[index] = el)}
+                      ref={(el) => {otpInputRefs.current[index] = el}}
                       type="text"
                       inputMode="numeric"
                       maxLength={1}
@@ -270,7 +270,7 @@ const ForgotPasswordSection = () => {
 
               <button
                 type="button"
-                // onClick={handleVerifyOtp}
+                onClick={handleVerifyOtp}
                 disabled={isVerifying}
                 className="flex h-[46px] w-full items-center justify-center gap-1.5 rounded-lg bg-blue-900 text-sm font-semibold text-white shadow-md shadow-blue-900/20 transition-colors hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
               >

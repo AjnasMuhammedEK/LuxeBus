@@ -214,6 +214,29 @@ export class AuthService implements IAuthService {
        return {success:true,message : `otp sent to ${email} successfully`}
     }
 
+    async userVerifyForgotPasswordOtp(data: { email: string; otp: string; }) {
+        const {email , otp } = data
+
+        const redisKey = `forgotPassword:${email}`
+        const storedOtp = await redisclient.get(redisKey)
+
+        if(!storedOtp){
+            throw new Error('OTP Expired')
+        }
+      
+        console.log('==-==-==-=',storedOtp)
+        const hashedUserOtp = crypto.createHash("sha256").update(otp).digest("hex");
+        console.log('Completed the comparision')
+        console.log('-------------------')
+       
+        if(hashedUserOtp !== storedOtp){
+            throw new Error('Invalid OTP')
+        }
+        console.log('Successed Verification OTP ')
+        return {success:true , message :"OTP Verified"}
+        
+    }
+
     async googleLogin(data: { credential: string }) {
 
         const { credential } = data;

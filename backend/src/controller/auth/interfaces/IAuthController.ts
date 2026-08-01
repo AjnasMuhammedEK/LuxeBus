@@ -7,6 +7,7 @@ export interface IAuthController {
     operatorLogin(req: Request,res: Response,next: NextFunction): Promise<void>;
     adminLogin(req:Request , res:Response , next : NextFunction):Promise<void>
     userForgottPasswordEmailVerify(req:Request,res:Response,next :NextFunction):Promise<void>
+    userVerifyForgotPasswordOtp(req:Request , res:Response,next:NextFunction):Promise<void>
     googleLogin(req:Request,res:Response,next:NextFunction):Promise<void>
 }
 

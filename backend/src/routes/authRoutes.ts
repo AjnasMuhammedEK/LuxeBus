@@ -16,6 +16,7 @@ router.post('/operatorRegister',upload.fields([{name:'registrationCertificate' ,
 router.post('/operatorLogin',authController.operatorLogin)
 router.post('/adminLogin',authController.adminLogin)
 router.post('/userForgotPasswordEmailVerify',authController.userForgottPasswordEmailVerify)
+router.post('/userVerifyForgotPasswordOtp',authController.userVerifyForgotPasswordOtp)
 router.post("/googleLogin",authController.googleLogin);
  
 export default router;

@@ -3,13 +3,17 @@ import { TYPES } from "../../../DI/types";
 import { IAdminRepository } from "../../../repositories/AdminRepository/interface/IAdminRepository";
 import { IAdminService } from "../interface/IAdminService";
 import { IOperator } from "../../../types/operator";
-
+import { IStorageService } from "../../storage/interfaces/IStorageService";
 @injectable()
 export class AdminService implements IAdminService {
 
     constructor(
         @inject(TYPES.AdminRepository)
-        private adminRepository: IAdminRepository
+        private adminRepository: IAdminRepository,
+
+        @inject(TYPES.S3StorageService)
+        private storageService:IStorageService
+
     ) {}
 
     async getOperators(): Promise<IOperator[]> {
@@ -25,5 +29,9 @@ export class AdminService implements IAdminService {
         }
 
         return operator;
+    }
+
+    async getDocumentSignedUrl(objectKey: string): Promise<string> {
+        return await this.storageService.getSignedUrl(objectKey)
     }
 }

@@ -1,7 +1,7 @@
 import api from '@/services/api'
 
 import { AUTH_BASE_ROUTE } from '@/constants/apiRoutes'
-import type { UserRegisterFormData , UserLoginFormData, OperatorLoginFormData , userForgotPasswordEmailVeryfication ,UserVerifyForgotPasswordOtp } from '@/types/auth.types'
+import type { UserRegisterFormData , UserLoginFormData, OperatorLoginFormData , userForgotPasswordEmailVeryfication ,UserVerifyForgotPasswordOtp, UserResetPassword } from '@/types/auth.types'
 
  
 export const registerUser = async (data:UserRegisterFormData) => {
@@ -36,6 +36,11 @@ export const userForgotPasswordEmailVerification = async (data : userForgotPassw
 
 export const userVerifyForgotPasswordOtp = async (data:UserVerifyForgotPasswordOtp) => {
     const response = await api.post(`/${AUTH_BASE_ROUTE}/userVerifyForgotPasswordOtp`,data)
+    return response.data
+}
+
+export const userResetPassword = async (data:UserResetPassword) => {
+    const response = await api.patch(`/${AUTH_BASE_ROUTE}/userResetPassword`,data)
     return response.data
 }
 

@@ -2,12 +2,9 @@ import { useState } from 'react'
 import { Lock, ShieldCheck, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
-
-// import {
-//   resetPasswordSchema,
-//   getValidationErrors,
-// } from '@/features/auth/passenger/validation/passengerAuthValidation'
-// import { userResetPassword } from '../../services/authService'
+import { userResetPassword } from '../../services/authService'
+import {resetPasswordSchema,getValidationErrors,} from '@/features/auth/passenger/validation/passengerAuthValidation'
+import { tr } from 'zod/v4/locales'
 
 type ResetPasswordFormData = {
   password: string
@@ -47,30 +44,29 @@ const ResetPasswordSection = () => {
   }
 
   const handleSubmit = async () => {
-    // const result = getValidationErrors(resetPasswordSchema, formData)
+    const result = getValidationErrors(resetPasswordSchema, formData)
 
-    // if (!result.success) {
-    //   setErrors(result.errors as FormErrors)
-    //   toast.error(Object.values(result.errors)[0])
-    //   return
-    // }
+    if(!result.success){
+        setErrors(result.errors as FormErrors)
+        toast.error(Object.values(result.errors)[0])
+        return
+    }
 
-    // setErrors({})
-    // setIsSubmitting(true)
+    setErrors({})
+    setIsSubmitting(true)
 
-    // try {
-    //   const response = await userResetPassword({
-    //     email,
-    //     otp,
-    //     password: result.data.password,
-    //   })
-    //   toast.success(response.message || 'Password reset successfully')
-    //   navigate('/login')
-    // } catch (error: any) {
-    //   toast.error(error?.response?.data?.message || error?.message || 'Something went wrong')
-    // } finally {
-    //   setIsSubmitting(false)
-    // }
+    try {
+        const response = await userResetPassword({email , password : result.data.password})
+        toast.success(response.message || 'Password reset successfully')
+        setTimeout(()=>{
+            navigate('/login')
+        },2000)
+        
+    } catch (error) {
+        toast.error(error?.response?.data?.message || error?.message || 'Something went wrong')
+    }finally{
+        setIsSubmitting(false)
+    }
   }
 
   return (

@@ -15,5 +15,6 @@ const adminController = container.get<AdminController>(
 
 router.get("/getOperators",authMiddleware,adminController.getOperators);
 router.patch("/updateOperatorStatus/:operatorId",authMiddleware,adminController.updateOperatorStatus);
+router.get('/document',authMiddleware,adminController.getDocumentSignedUrl)
 
 export default router;

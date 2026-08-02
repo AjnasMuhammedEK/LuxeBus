@@ -55,4 +55,21 @@ export class AdminController implements IAdminController {
         }
     }
 
+    getDocumentSignedUrl = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const {objectKey} = req.query
+
+            if(!objectKey){
+                throw new Error('Object key is Missing')
+            }
+            const signedUrl = await this.adminService.getDocumentSignedUrl(objectKey as string)
+            console.log('Backend signer url' , signedUrl)
+
+            res.status(200).json({success:true , signedUrl})
+        } catch (error) {
+            next(error)
+            
+        }
+    }
+
 }

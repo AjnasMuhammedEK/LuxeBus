@@ -237,16 +237,31 @@ export class AuthService implements IAuthService {
         
     }
 
+    async userResetPassword(data: { email: string; password: string; })  {
+        const {email , password} = data
+
+        const existUser = await this.authRepository.findUserByEmail(email)
+        const hashpassword = await bcrypt.hash(password,10)
+
+        if(!existUser){
+            throw new Error('User Not Found')
+        }
+
+        await this.authRepository.updateUser(email,{password:hashpassword})
+
+        return {success:true , message : 'Password Changed Successfuly'}
+    }
+
+
+
+
     async googleLogin(data: { credential: string }) {
 
         const { credential } = data;
 
         const ticket = await this.client.verifyIdToken({
-
             idToken: credential,
-
             audience: process.env.GOOGLE_CLIENT_ID,
-
         });
 
         const payload = ticket.getPayload();
@@ -255,15 +270,7 @@ export class AuthService implements IAuthService {
             throw new Error("Google authentication failed");
         }
 
-        const {
-
-            sub,
-
-            name,
-
-            email,
-
-        } = payload;
+        const {sub,name,email,} = payload;
 
         if (!email) {
             throw new Error("Email not found");
@@ -272,48 +279,24 @@ export class AuthService implements IAuthService {
         let existUser = await this.authRepository.findUserByEmail(email);
 
         if (!existUser) {
-
             existUser = await this.authRepository.createGoogleUser({
 
                 name: name || "",
-
                 email,
-
                 phone: "",
-
                 password: "",
-
                 googleId: sub,
-
                 role: "user",
-
                 isBlocked: false,
-
                 isVerified: true,
-
             });
-
         }
 
         const token = generateToken(
-
             existUser._id.toString(),
-
             existUser.role
-
         );
 
-        return {
-
-            success: true,
-
-            message: "Google Login Successful",
-
-            user: existUser,
-
-            token,
-
-        };
-
-}
+        return {success: true,message: "Google Login Successful",user: existUser,token};
+    }
 }

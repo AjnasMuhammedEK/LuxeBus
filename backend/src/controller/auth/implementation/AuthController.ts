@@ -115,6 +115,17 @@ export class AuthController implements IAuthController {
         }
     }
 
+    userResetPassword = async  (req: Request, res: Response, next: NextFunction)=> {
+        try {
+            const {email , password} = req.body
+            const response = await this.authService.userResetPassword({email,password})
+            res.status(201).json(response)
+        } catch (error) {
+            console.log('ERROR in AuthCOntroller userResetPassword :',error) 
+            next(error)               
+        }
+    }
+
     googleLogin = async(req: Request, res: Response, next: NextFunction) => {
         try {
             const {credential } = req.body

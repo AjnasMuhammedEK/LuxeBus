@@ -10,4 +10,5 @@ export interface IAuthService {
   userForgotPasswordEmailVerify(data:{email:string}):Promise<{ success: boolean;message: string;}>
   googleLogin(data: {credential: string;}): Promise<{success: boolean;message: string;user: IUser;token: string;}>;
   userVerifyForgotPasswordOtp(data:{email:string , otp:string}): Promise<{success: boolean;message: string;}>
+  userResetPassword(data:{email:string , password:string}): Promise<{success: boolean;message: string;}>
 }

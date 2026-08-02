@@ -145,12 +145,7 @@ const SuperAdminLogin = () => {
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                   Password
                 </span>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs font-semibold text-emerald-700 hover:underline"
-                >
-                  Forget Password?
-                </Link>
+           
               </div>
               <div className="flex h-[42px] items-center gap-2 rounded-lg border border-gray-200 bg-slate-50 px-3 ring-1 ring-transparent transition-shadow focus-within:border-[#0b1437] focus-within:ring-indigo-100">
                 <Lock className="h-4 w-4 shrink-0 text-gray-400" />

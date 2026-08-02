@@ -28,4 +28,8 @@ export class AuthRepository implements IAuthRepository {
         return await User.create(user);
     }
 
+    async updateUser(email: string, data: Partial<IUser>): Promise<IUser | null> {
+        return await User.findOneAndUpdate({email},data)
+    }
+
 }   

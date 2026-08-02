@@ -10,3 +10,8 @@ export const updateOperatorStatus = async ( operatorId: string,status: string) =
     const response = await api.patch(`/${ADMIN_BASE_ROUTE}/updateOperatorStatus/${operatorId}`,{status});
     return response.data;
 };
+
+export const getSignedDocmunetUrl = async( objectKey: string) =>{
+    const response = await api.get(`/${ADMIN_BASE_ROUTE}/document`,{params:{objectKey}})
+    return response.data
+}

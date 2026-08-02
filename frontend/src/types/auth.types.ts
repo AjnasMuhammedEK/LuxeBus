@@ -49,6 +49,10 @@
         password: string
     }
 
+    export interface UserResetPassword{
+        email :string,
+        password : string
+    }
 export interface GoogleLoginRequest {
     credential: string;
 }

@@ -195,9 +195,7 @@ const OperatorLoginSection = () => {
               <label className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Password</span>
-                  <button type="button" className="text-xs font-semibold text-blue-700 hover:text-blue-600">
-                    Forgot Password?
-                  </button>
+                   
                 </div>
                 <div
                   className={`flex h-[42px] items-center gap-2 rounded-lg border bg-slate-50 px-3 ring-1 ring-transparent transition-shadow focus-within:ring-blue-100 ${

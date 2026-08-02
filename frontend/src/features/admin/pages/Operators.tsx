@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {Bus,Users,Ticket,Wallet,TrendingUp,ArrowUpRight,ChevronRight,X,FileText,ExternalLink,} from 'lucide-react'
 import { getOperators, updateOperatorStatus } from '@/features/admin/services/adminService'
-
+import { getSignedDocmunetUrl } from '@/features/admin/services/adminService'
  
 interface Operator {
   _id: string
@@ -28,6 +28,14 @@ interface StatCardData {
 }
  
 
+interface DocumentRowProps {
+
+    label: string;
+
+    objectKey: string;
+
+}
+
 const statusStyles: Record<string, string> = {
   Pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
   pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
@@ -49,19 +57,48 @@ const StatusBadge = ({ status }: { status: string }) => (
   </span>
 )
 
- 
-// const DocumentRow = ({ label, url }: { label: string; url: string }) => (
-//   <a
-//     href={url}
-//     target="_blank"
-//     rel="noopener noreferrer"
-//     className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 transition-colors hover:border-blue-300 hover:bg-blue-50"
-//   >
-//     <span>{label}</span>
-//   </a>
-// )
 
+const handleDoumentView = async (objectKey : string) => {
+  try {
+    const response = await getSignedDocmunetUrl(objectKey)
+    console.log('response ------------- ', response)
+console.log('response.signerUrl ------------------ ',response.signerUrl)
+    window.open(response.signedUrl,'_blank')
+  } catch (error) {
+    console.log(error);
+
+  }
+}
  
+ 
+const DocumentRow = ({
+    label,
+    objectKey
+}: DocumentRowProps) => (
+
+    <button
+
+        onClick={() => handleDoumentView(objectKey)}
+
+        className="flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 hover:bg-blue-50"
+
+    >
+
+        <div className="flex items-center gap-3">
+
+            <FileText className="h-5 w-5 text-blue-600"/>
+
+            <span>{label}</span>
+
+        </div>
+
+        <ExternalLink className="h-5 w-5"/>
+
+    </button>
+
+);
+
+
 interface OperatorModalProps {
   operator: Operator
   onClose: () => void
@@ -167,16 +204,27 @@ const OperatorDetailsModal = ({ operator, onClose, onStatusChange, updating }: O
           </div>
 
           {/* Documents */}
-          {/* <div>
+          <div>
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               Uploaded Documents
             </span>
             <div className="mt-2 flex flex-col gap-2">
-              <DocumentRow label="Registration Certificate" url={operator.registrationCertificate} />
-              <DocumentRow label="Tax Certificate" url={operator.taxCertificate} />
-              <DocumentRow label="Transport License" url={operator.transportLicense} />
+               <DocumentRow
+                    label="Registration Certificate"
+                    objectKey={operator.registrationCertificate}
+                />
+
+                <DocumentRow
+                    label="Tax Certificate"
+                    objectKey={operator.taxCertificate}
+                />
+
+                <DocumentRow
+                    label="Transport License"
+                    objectKey={operator.transportLicense}
+                />
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>

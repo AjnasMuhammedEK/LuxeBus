@@ -1,18 +1,20 @@
 import bcrypt from 'bcrypt'
 import { IAuthService } from '../interface/IAuthService'
-import { IAuthRepository } from '../../../repositories/auth/interfaces/IAuthRepository'
-import { inject, injectable } from "inversify";
+ import { inject, injectable } from "inversify";
 import { TYPES } from '../../../DI/types';
 import { generateToken } from "../../../utils/jwt";
 import { IStorageService } from "../../storage/interfaces/IStorageService";
-import { IOperator } from '../../../types/operator';
-import { IUser } from '../../../types/user';
-import { PassThrough } from 'node:stream';
 import { OAuth2Client } from "google-auth-library";
 import { generateOtp } from '../../../utils/generateOtp';
 import crypto from 'crypto'
 import redisclient from '../../../config/redis';
 import { IEmailService } from '../../email/interface/IEmailService';
+import { userDataMapping } from '../../../utils/mapping/userDto';
+import { operatorDataMapping } from '../../../utils/mapping/operatorDto';
+import { IUserAuthRepository } from '../../../repositories/auth/userAuth/interfaces/IUserAuthRepository';
+import { IOperatorAuthRepository } from '../../../repositories/auth/operatorAuth/interfaces/IOperatorAuthRepository';
+import { IOperatorRegisterData } from '../../../types/operator';
+import logger from '../../../config/logger';
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -20,7 +22,8 @@ export class AuthService implements IAuthService {
     private client: OAuth2Client
 
     constructor(
-        @inject(TYPES.AuthRepository) private authRepository:IAuthRepository,
+        @inject(TYPES.UserAuthRepository)private userRepository : IUserAuthRepository,
+        @inject(TYPES.OperatorAuthRepository)private operatorRepository:IOperatorAuthRepository,
         @inject(TYPES.S3StorageService) private storageService: IStorageService,
         @inject(TYPES.EmailService) private emailService:IEmailService
     ){  
@@ -29,7 +32,7 @@ export class AuthService implements IAuthService {
 
     async userRegister(data:{name: string, email: string, phone: string, password: string}) {
         const { name, email, phone, password } = data;
-        const exist = await this.authRepository.findUserByEmail(email)
+        const exist = await this.userRepository.findUserByEmail(email)
 
         if(exist){
             throw new Error("User already exists")
@@ -37,7 +40,9 @@ export class AuthService implements IAuthService {
 
         const hashpassword = await bcrypt.hash(password,10)
 
-        await this.authRepository.userRegister({
+        logger.info(`New user registered: ${email}`);
+
+        await this.userRepository.userRegister({
             name,
             email,
             phone,
@@ -51,9 +56,10 @@ export class AuthService implements IAuthService {
     async userLogin(data: { email: string; password: string; }) {
         const {email ,password} = data
 
-        const existUser = await this.authRepository.findUserByEmail(email)
+        const existUser = await this.userRepository.findUserByEmail(email)
 
         if(!existUser){
+            logger.warn(`User not found: ${email}`);
             throw new Error('User Not Found')
         }
 
@@ -68,6 +74,7 @@ export class AuthService implements IAuthService {
         const isMatch = await bcrypt.compare(password , existUser.password)
 
         if(!isMatch){
+            logger.warn(`Wrong password: ${email}`);
             throw new Error('Incorrect Password')
         }
 
@@ -76,10 +83,13 @@ export class AuthService implements IAuthService {
             existUser.role
         );
 
+        logger.info(`User logged in: ${email}`);
+      
+
         return {
             success: true,
             message: "Login Successful",
-            user: existUser,
+            user: userDataMapping(existUser),
             token
         };
 
@@ -87,9 +97,9 @@ export class AuthService implements IAuthService {
     }
 
 
-    async operatorRegister(data: any,files: {[fieldname: string]: Express.Multer.File[];}){
+    async operatorRegister(data: IOperatorRegisterData,files: {[fieldname: string]: Express.Multer.File[];}){
 
-        const exist = await this.authRepository.findOperatorByEmail(data.email)
+        const exist = await this.operatorRepository.findOperatorByEmail(data.email)
 
         if(exist){
             throw new Error('Operator already exists')
@@ -111,7 +121,7 @@ export class AuthService implements IAuthService {
             "operators"
         );
              
-        await this.authRepository.operatorRegister({
+        await this.operatorRepository.operatorRegister({
             ownerName: data.ownerName,
             email: data.email,
             phone: data.phone,
@@ -133,7 +143,7 @@ export class AuthService implements IAuthService {
     async operatorLogin(data: { email: string; password: string; }) {
         const {email , password} = data
 
-        const exist = await this.authRepository.findOperatorByEmail(email)
+        const exist = await this.operatorRepository.findOperatorByEmail(email)
 
         if(!exist){
             throw new Error('User Not Found , Please Register')
@@ -153,7 +163,7 @@ export class AuthService implements IAuthService {
         return{
             success: true,
             message: "Login Successful",
-            operator: exist,
+            operator: operatorDataMapping(exist),
             token
         }
     }
@@ -161,7 +171,7 @@ export class AuthService implements IAuthService {
     async AdminLogin(data: { email: string; password: string; }) {
         const {email , password} = data
 
-        const existAdmin = await this.authRepository.findUserByEmail(email)
+        const existAdmin = await this.userRepository.findUserByEmail(email)
 
         if(!existAdmin){
             throw new Error('Admin Not Found')
@@ -184,7 +194,7 @@ export class AuthService implements IAuthService {
         return {
             success: true,
             message: "Admin Login Successful",
-            user : existAdmin,
+            user : userDataMapping(existAdmin),
             token,
         };
     }
@@ -193,7 +203,7 @@ export class AuthService implements IAuthService {
    async userForgotPasswordEmailVerify(data: { email: string; }) {
        const {email} = data
 
-       const existUser = await this.authRepository.findUserByEmail(email)
+       const existUser = await this.userRepository.findUserByEmail(email)
 
        if(!existUser){
         throw new Error('User Not Found')
@@ -224,10 +234,10 @@ export class AuthService implements IAuthService {
             throw new Error('OTP Expired')
         }
       
-        console.log('==-==-==-=',storedOtp)
+        // console.log('==-==-==-=',storedOtp)
         const hashedUserOtp = crypto.createHash("sha256").update(otp).digest("hex");
-        console.log('Completed the comparision')
-        console.log('-------------------')
+        // console.log('Completed the comparision')
+        // console.log('-------------------')
        
         if(hashedUserOtp !== storedOtp){
             throw new Error('Invalid OTP')
@@ -240,14 +250,14 @@ export class AuthService implements IAuthService {
     async userResetPassword(data: { email: string; password: string; })  {
         const {email , password} = data
 
-        const existUser = await this.authRepository.findUserByEmail(email)
+        const existUser = await this.userRepository.findUserByEmail(email)
         const hashpassword = await bcrypt.hash(password,10)
 
         if(!existUser){
             throw new Error('User Not Found')
         }
 
-        await this.authRepository.updateUser(email,{password:hashpassword})
+        await this.userRepository.updateUser(email,{password:hashpassword})
 
         return {success:true , message : 'Password Changed Successfuly'}
     }
@@ -276,10 +286,10 @@ export class AuthService implements IAuthService {
             throw new Error("Email not found");
         }
 
-        let existUser = await this.authRepository.findUserByEmail(email);
+        let existUser = await this.userRepository.findUserByEmail(email);
 
         if (!existUser) {
-            existUser = await this.authRepository.createGoogleUser({
+            existUser = await this.userRepository.createGoogleUser({
 
                 name: name || "",
                 email,
@@ -297,6 +307,6 @@ export class AuthService implements IAuthService {
             existUser.role
         );
 
-        return {success: true,message: "Google Login Successful",user: existUser,token};
+        return {success: true,message: "Google Login Successful",user: userDataMapping(existUser),token};
     }
 }

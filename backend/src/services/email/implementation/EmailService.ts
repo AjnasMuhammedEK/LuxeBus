@@ -74,8 +74,8 @@ export class EmailService implements IEmailService {
             await this.transporter.sendMail(mailOptions);
             console.log(`OTP sent successfully to ${email}`);
         } catch (error) {
-            console.log("Error while sending OTP email:", error);
-            throw new Error("Failed to send OTP email");
+            console.error("Error while sending OTP email:", error);
+            throw error;
         }
     }
 }

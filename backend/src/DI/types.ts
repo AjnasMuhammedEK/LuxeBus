@@ -1,5 +1,6 @@
 export const TYPES = {
-  AuthRepository: Symbol.for("AuthRepository"),
+  UserAuthRepository: Symbol.for("UserAuthRepository"),
+  OperatorAuthRepository: Symbol.for("OperatorAuthRepository"),
   AuthService: Symbol.for("AuthService"),
   AuthController: Symbol.for("AuthController"),
   S3StorageService: Symbol.for("S3StorageService"),

@@ -1,4 +1,4 @@
-import { PutObjectCommand ,DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand , GetObjectCommand } from "@aws-sdk/client-s3";
 import s3Client from "../../../config/aws";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { IStorageService } from "../interfaces/IStorageService";

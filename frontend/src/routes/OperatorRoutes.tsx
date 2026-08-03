@@ -6,10 +6,17 @@ import OperatorLoginSection from "@/features/auth/operator/pages/OperatorLogin";
 import OperatorStatusSection from '@/features/operator/pages/OperatorStatusSection '
 import Home from '@/features/operator/pages/Home'
 import ProtectedRoute from "@/routes/ProtectedRoute";
+import PublicRoute from "./PublicRoute";
 
 const OperatorRoutes = () => {
     return (
         <Routes>
+
+            <Route element={<PublicRoute role="operator" />}>
+                <Route path="/register" element={<OperatorRegisterSection/>}/>
+                <Route path="/login" element={<OperatorLoginSection/>}/>            
+            </Route>
+
             <Route path="/register" element={<OperatorRegisterSection/>}/>
             <Route path="/login" element={<OperatorLoginSection/>}/>
             <Route path="status" element={<OperatorStatusSection />} />

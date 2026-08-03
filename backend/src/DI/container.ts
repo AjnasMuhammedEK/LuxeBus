@@ -2,7 +2,12 @@ import { Container } from "inversify";
 
 import { TYPES } from "./types";
 
-import { AuthRepository } from "../repositories/auth/implementation/AuthRepository";
+import { UserAuthRepository } from "../repositories/auth/userAuth/implementation/UserAuthRepository"; 
+import { OperatorAuthRepository } from "../repositories/auth/operatorAuth/implementation/OperatorAuthRepository"; 
+
+import { IUserAuthRepository } from "../repositories/auth/userAuth/interfaces/IUserAuthRepository"; 
+import { IOperatorAuthRepository } from "../repositories/auth/operatorAuth/interfaces/IOperatorAuthRepository"; 
+
 import { AuthService } from "../services/auth/implementation/authService";
 import { AuthController } from "../controller/auth/implementation/AuthController";
 import { IStorageService } from "../services/storage/interfaces/IStorageService";
@@ -19,8 +24,12 @@ import { EmailService } from "../services/email/implementation/EmailService";
 export const container = new Container();
 
 container
-.bind(TYPES.AuthRepository)
-.to(AuthRepository);
+    .bind<IUserAuthRepository>(TYPES.UserAuthRepository)
+    .to(UserAuthRepository);
+
+container
+    .bind<IOperatorAuthRepository>(TYPES.OperatorAuthRepository)
+    .to(OperatorAuthRepository);
 
 container
 .bind(TYPES.AuthService)

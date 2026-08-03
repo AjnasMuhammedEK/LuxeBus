@@ -69,7 +69,7 @@ const SuperAdminLogin = () => {
 
       toast.success(response.message);
 
-      navigate("/admin/dashboard");
+      navigate("/admin/dashboard",{replace:true});
     } catch (error: any) {
       const message =
         error?.response?.data?.message ?? error?.message ?? "Login failed";

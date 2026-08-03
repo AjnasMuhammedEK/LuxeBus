@@ -7,6 +7,7 @@ import authRoutes from "./routes/authRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import adminRoutes from './routes/adminRoutes'
 import redisclient from './config/redis'
+import logger from './config/logger'
 dotenv.config()
 
 const app = express()
@@ -26,7 +27,7 @@ const startServer = async () => {
 
         await redisclient.connect();
         app.listen(PORT,()=>{
-            console.log(`Server Started , PORT : ${PORT}`)
+            logger.info(`Server Started at${PORT}`)
         })        
     } catch (error) {
         console.log('Server Failed : ',error)

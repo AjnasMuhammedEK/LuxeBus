@@ -11,7 +11,8 @@ import {
   LogOut,
 } from "lucide-react";
 import logo from "../../../../public/logo.png";
-import { clearAdmin } from "@/redux/slice/adminAuthSlice";
+import { logoutAdmin } from "@/redux/slice/adminAuthSlice";
+import { adminLogout } from "@/features/auth/services/authService";
 
 interface SidebarLinkItem {
   label: string;
@@ -32,9 +33,13 @@ const AdminSidebar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    dispatch(clearAdmin());
-    navigate("/admin/login", { replace: true });
+  const handleLogout = async () => {
+    try {
+      await adminLogout()
+      dispatch(logoutAdmin())
+    } catch (error) {
+      console.log("Admin Logout failed:", error);
+    }
   };
 
   const linkClasses = ({ isActive }: { isActive: boolean }) =>

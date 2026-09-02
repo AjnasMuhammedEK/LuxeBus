@@ -3,6 +3,7 @@ import DailyRotateFile from "winston-daily-rotate-file";
 
 const logger = createLogger({
     level:'info',
+    
     format: format.combine(
         format.timestamp({
             format:'YYYY-MM-DD HH:mm:ss'

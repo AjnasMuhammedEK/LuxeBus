@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt'
 import { IAuthService } from '../interface/IAuthService'
  import { inject, injectable } from "inversify";
 import { TYPES } from '../../../DI/types';
-import { generateToken } from "../../../utils/jwt";
+import { generateAccessToken ,generateRefreshToken , verifyRefreshToken } from "../../../utils/jwt";
 import { IStorageService } from "../../storage/interfaces/IStorageService";
 import { OAuth2Client } from "google-auth-library";
 import { generateOtp } from '../../../utils/generateOtp';
@@ -15,6 +15,7 @@ import { IUserAuthRepository } from '../../../repositories/auth/userAuth/interfa
 import { IOperatorAuthRepository } from '../../../repositories/auth/operatorAuth/interfaces/IOperatorAuthRepository';
 import { IOperatorRegisterData } from '../../../types/operator';
 import logger from '../../../config/logger';
+import { IUserMappedData } from '../../../types/user';
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -78,10 +79,9 @@ export class AuthService implements IAuthService {
             throw new Error('Incorrect Password')
         }
 
-        const token = generateToken(
-            existUser._id.toString(),
-            existUser.role
-        );
+        const accessToken = generateAccessToken(existUser._id.toString(), existUser.role)
+
+        const refreshToken = generateRefreshToken(existUser._id.toString() , existUser.role)
 
         logger.info(`User logged in: ${email}`);
       
@@ -90,7 +90,8 @@ export class AuthService implements IAuthService {
             success: true,
             message: "Login Successful",
             user: userDataMapping(existUser),
-            token
+            accessToken,
+            refreshToken
         };
 
 
@@ -155,16 +156,16 @@ export class AuthService implements IAuthService {
             throw new Error('Incorrect Password')
         }
 
-        const token = generateToken(
-            exist._id.toString() ,
-            exist.role
-        )
+        const accessToken = generateAccessToken(exist._id.toString() ,exist.role)
+
+        const refreshToken = generateRefreshToken(exist._id.toString() ,exist.role)
 
         return{
             success: true,
             message: "Login Successful",
             operator: operatorDataMapping(exist),
-            token
+            accessToken,
+            refreshToken
         }
     }
 
@@ -186,16 +187,16 @@ export class AuthService implements IAuthService {
             throw new Error('Incorrect Password')
         }
 
-        const token = generateToken(
-            existAdmin._id.toString(),
-            existAdmin.role
-        );
+        const accessToken = generateAccessToken(existAdmin._id.toString(),existAdmin.role);
+
+        const refreshToken = generateRefreshToken(existAdmin._id.toString(),existAdmin.role);
 
         return {
             success: true,
             message: "Admin Login Successful",
-            user : userDataMapping(existAdmin),
-            token,
+            admin : userDataMapping(existAdmin),
+            accessToken,
+            refreshToken
         };
     }
 
@@ -302,11 +303,98 @@ export class AuthService implements IAuthService {
             });
         }
 
-        const token = generateToken(
-            existUser._id.toString(),
-            existUser.role
-        );
+        const accessToken = generateAccessToken(existUser._id.toString(),existUser.role);
 
-        return {success: true,message: "Google Login Successful",user: userDataMapping(existUser),token};
+        const refreshToken = generateRefreshToken(existUser._id.toString(),existUser.role);
+
+        return {
+            success: true,
+            message: "Google Login Successful",
+            user: userDataMapping(existUser),
+            accessToken,
+            refreshToken
+        }
     }
+
+    async userRefreshToken(refrehToken: string) {
+
+        const decoded = verifyRefreshToken(refrehToken)
+
+        if(!decoded){
+            throw new Error ('Invalid or expired refrsh token')
+        }
+
+        if(decoded.role !== 'user'){
+            throw new Error ('Invalid Refresh Token')
+        }
+
+        const user = await this.userRepository.findUserById(decoded.id)
+
+        if(!user){
+            throw new Error('User Not Found')
+        }
+
+        if(user.isBlocked){
+            throw new Error('User Is Blocked')
+        }
+
+        const accessToken = generateAccessToken(decoded.id , decoded.role)
+
+        return {
+            accessToken
+        }
+        
+    }
+
+    async adminRefreshToken(refreshToken: string) {
+        
+        const decoded = verifyRefreshToken(refreshToken)
+
+        if(!decoded){
+            throw new Error('Invalid Or Expired Refresh Token')
+        }
+
+        if(decoded.role !== 'admin'){
+            throw new Error ('Invalid Refresh Token')
+        }
+
+        const admin = await this.userRepository.findUserById(decoded.id)
+
+        if(!admin){
+            throw new Error ('Admin Not Found')
+        }
+
+        if(admin.isBlocked){
+            throw new Error ('Admin is blocked')
+        }
+        const accessToken = generateAccessToken(decoded.id , decoded.role)
+
+        return {accessToken}
+    }
+
+    async operatorRefreshToken(refreshToken: string) {
+        
+        const decode = verifyRefreshToken(refreshToken)
+
+        if(!decode){
+            throw new Error('Innalid Refresh Token')
+        }
+
+        if(decode.role !== 'operator'){
+            throw new Error ('Invalid Token')
+        }
+
+        const operator = await this.operatorRepository.findOperatorById(decode.id)
+
+        if(!operator){
+            throw new Error ('Operator Not Found')
+        }
+
+        const accessToken = generateAccessToken(operator.id , operator.role)
+
+        return {accessToken}
+    }
+
+  
+
 }

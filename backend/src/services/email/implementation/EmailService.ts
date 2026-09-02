@@ -16,7 +16,7 @@ export class EmailService implements IEmailService {
             service:'gmail',
             auth:{
                 user:process.env.NODEMAILER_EMAIL,
-        pass:process.env.NODEMAILER_PASSWORD   
+                pass:process.env.NODEMAILER_PASSWORD   
             }
         })
     }
@@ -35,6 +35,7 @@ export class EmailService implements IEmailService {
 
                 <p>Hello,</p>
 
+
                 <p>
                 Thank you for choosing <strong>LuxeBus</strong>.
                 Please use the following One-Time Password (OTP) to verify your email address.
@@ -52,10 +53,6 @@ export class EmailService implements IEmailService {
 
                 <p>
                 For your security, please do not share this OTP with anyone.
-                </p>
-
-                <p>
-                If you did not request this verification, you can safely ignore this email.
                 </p>
 
                 <hr style="margin: 30px 0;">

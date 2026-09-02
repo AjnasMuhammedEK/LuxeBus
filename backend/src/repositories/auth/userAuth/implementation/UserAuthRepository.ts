@@ -26,4 +26,8 @@ export class UserAuthRepository extends BaseRepositary<IUser> implements IUserAu
     async updateUser(email: string, data: Partial<IUser>): Promise<IUser | null> {
         return await this.updateOne({ email },data);
     }    
+    
+    async findUserById(id: string): Promise<UserDocument | null> {
+        return await this.findById(id)
+    }
 }

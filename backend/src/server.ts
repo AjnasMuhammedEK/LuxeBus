@@ -8,12 +8,21 @@ import { errorHandler } from "./middleware/errorHandler";
 import adminRoutes from './routes/adminRoutes'
 import redisclient from './config/redis'
 import logger from './config/logger'
+import cookieParser from 'cookie-parser'
+
+
 dotenv.config()
 
 const app = express()
-app.use(express.json())
 
-app.use(cors())
+app.use(express.json())
+app.use(cookieParser())
+
+app.use(cors({
+    origin:process.env.FRONTEND_URL,
+    credentials:true
+}))
+
 app.use("/api/auth", authRoutes)
 app.use('/api/admin',adminRoutes)
 

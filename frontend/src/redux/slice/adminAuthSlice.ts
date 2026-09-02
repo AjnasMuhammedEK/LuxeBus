@@ -1,52 +1,52 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+ 
 
 interface AdminState {
   admin: any | null;
-  token: string | null;
+  accessToken: string | null;
+  isAuthenticated: boolean;
 }
 
+
+interface AdminLoginPayload {
+  admin: any;
+  accessToken: string;
+}
+
+
+
 const initialState: AdminState = {
-  admin: JSON.parse(localStorage.getItem("admin") || "null"),
-  token: localStorage.getItem("adminToken"),
+  admin: null,
+  accessToken: null,
+  isAuthenticated: false,
 };
 
 const adminAuthSlice = createSlice({
-  name: "adminAuth",
+  name:'adminAuth',
   initialState,
-  reducers: {
-    setAdmin: (
-      state,
-      action: PayloadAction<{
-        admin: any;
-        token: string;
-      }>
+
+  reducers : {
+    loginAdmin : (
+      state , action : PayloadAction<AdminLoginPayload>
     ) => {
-      state.admin = action.payload.admin;
-      state.token = action.payload.token;
-
-      localStorage.setItem(
-        "admin",
-        JSON.stringify(action.payload.admin)
-      )
-      localStorage.setItem(
-        "adminToken",
-        action.payload.token
-      )
-
+      state.admin = action.payload.admin
+      state.accessToken = action.payload.accessToken
+      state.isAuthenticated = true
     },
 
-    clearAdmin: (state) => {
-      state.admin = null;
-      state.token = null;
-
-
-      localStorage.removeItem("admin")
-      localStorage.removeItem("adminToken")
+    setAdminAccessToken : (state , action : PayloadAction <string>) => {
+      state.accessToken = action.payload
     },
-  },
+
+    logoutAdmin : (state) => {
+      state.admin = null
+      state.accessToken = null
+      state.isAuthenticated = false
+    }
+  }
 });
 
-export const {setAdmin,clearAdmin,} = adminAuthSlice.actions;
+export const {loginAdmin,setAdminAccessToken,logoutAdmin} = adminAuthSlice.actions;
 
 export default adminAuthSlice.reducer;

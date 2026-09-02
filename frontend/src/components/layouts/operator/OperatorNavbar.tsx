@@ -2,16 +2,22 @@ import { Bell } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
  
-import { clearOperator } from "@/redux/slice/operatorAuthSlice";
+import { logoutOperator } from "@/redux/slice/operatorAuthSlice";
 
+import { operatorLogout } from "@/features/auth/services/authService";
 const OperatorNavbar = () => {
   const user = useSelector((state: any) => state.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    dispatch(clearOperator());
-    navigate("/operator/login", { replace: true });
+  const handleLogout = async () => {
+    try {
+      await operatorLogout()
+      dispatch(logoutOperator())
+
+    } catch (error) {
+      console.log("Operator Logout failed:", error);
+    }
   };
 
   return (

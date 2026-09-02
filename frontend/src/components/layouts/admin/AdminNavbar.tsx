@@ -2,7 +2,7 @@ import { Bell } from "lucide-react";
 import { useSelector } from "react-redux";
 
 const AdminNavbar = () => {
-  const user = useSelector((state: any) => state.auth.user);
+  const user = useSelector((state: any) => state.adminAuth.admin);
 
   return (
     <header className="flex h-20 w-full items-center justify-between border-b border-gray-100 bg-white px-6">

@@ -3,6 +3,7 @@ import { container } from "../DI/container";
 import {TYPES} from '../DI/types'
 import { AuthController } from "../controller/auth/implementation/AuthController";
 import upload from "../middleware/multer";
+import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = Router()
 
@@ -19,5 +20,11 @@ router.post('/userForgotPasswordEmailVerify',authController.userForgottPasswordE
 router.post('/userVerifyForgotPasswordOtp',authController.userVerifyForgotPasswordOtp)
 router.patch('/userResetPassword',authController.userResetPassword)
 router.post("/googleLogin",authController.googleLogin);
- 
+router.post('/refresh-token',authController.userRefreshToken)
+router.post('/admin-refresh-token',authController.adminRefreshToken)
+router.post('/operator-refresh-token',authController.operatorRefreshToken)
+router.post('/userLogout',authController.userLogout)
+router.post('/adminLogout',authController.adminLogout)
+router.post('/operatorLogout',authController.operatorLogout)
+
 export default router;

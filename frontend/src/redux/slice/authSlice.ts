@@ -1,50 +1,56 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import type {IUser} from '../../types/user.types'
 
 interface AuthState {
-  user: any | null;
-  token: string | null;
+  user: IUser | null;
+  accessToken: string | null;
+  isAuthenticated: boolean;
+}
+
+interface LoginPayload {
+  user: IUser;
+  accessToken: string;
 }
 
 const initialState: AuthState = {
-  user: JSON.parse(localStorage.getItem("user") || "null"),
-  token: localStorage.getItem("userToken"),
+  user: null,
+  accessToken: null,
+  isAuthenticated: false,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
-  reducers: {
-    setUser: (
-      state,
-      action: PayloadAction<{
-        user: any;
-        token: string;
-      }>
+
+  reducers : {
+    login :(
+      state , action :PayloadAction<LoginPayload>
     ) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.user = action.payload.user
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify(action.payload.user)
-      )
-      localStorage.setItem(
-        "userToken",
-        action.payload.token
-      );
+      state.accessToken = action.payload.accessToken
+
+      state.isAuthenticated = true
     },
 
-    clearUser: (state) => {
-      state.user = null;
-      state.token = null;
-
-      localStorage.removeItem("user")
-      localStorage.removeItem("userToken")
+    setAccessToken :(
+      state , action:PayloadAction<string>
+    ) => {
+      state.accessToken = action.payload
     },
-  },
+
+    logout : (state) => {
+      state.user = null
+      state.accessToken = null
+      state.isAuthenticated = false
+    }
+  }
+  
+
+  
 });
 
-export const { setUser, clearUser } = authSlice.actions;
+export const { login , setAccessToken , logout } = authSlice.actions;
 
 export default authSlice.reducer;

@@ -9,7 +9,7 @@ import {
   getValidationErrors,
 } from "@/features/auth/admin/validation/AdminAuthValidation";
 import { adminLogin } from "../../services/authService";
-import { setAdmin } from "@/redux/slice/adminAuthSlice";  
+import { loginAdmin } from "@/redux/slice/adminAuthSlice";  
 
 type FormErrors = Partial<Record<keyof UserLoginFormData, string>>;
 
@@ -60,12 +60,12 @@ const SuperAdminLogin = () => {
     try {
       const response = await adminLogin(result.data);
 
-      dispatch(
-        setAdmin({
-          admin: response.user,
-          token: response.token,
-        })
-      );
+    dispatch(
+      loginAdmin({
+        admin: response.admin,
+        accessToken: response.accessToken,
+      })
+    );
 
       toast.success(response.message);
 

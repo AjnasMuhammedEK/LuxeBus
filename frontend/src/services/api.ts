@@ -1,19 +1,56 @@
-import axios from "axios";
-import env from '@/config/env'
+// import axios from "axios";
+// import env from "@/config/env";
+// import { store } from "@/redux/store/store";
  
 
-const api = axios.create({
-  baseURL: env.API_BASE_URL,
-});
+
+// export const passengerApi = axios.create({
+//   baseURL : env.API_BASE_URL,
+//   withCredentials:true
+// })
+
+// passengerApi.interceptors.request.use ((config) => {
+//   const state = store.getState()
+
+//   const token = state.auth.accessToken
+//   if(token){
+//     config.headers.Authorization = `Bearer ${token}`
+//   }
+
+//   return config
+// })
 
 
-api.interceptors.request.use((config) => {
+// export const operatorApi = axios.create({
+//   baseURL:env.API_BASE_URL,
+//   withCredentials:true
+// })
 
-    const token =localStorage.getItem("userToken") ||localStorage.getItem("adminToken") ||localStorage.getItem("operatorToken");
-    if(token){
-        config.headers.Authorization = `Bearer ${token}`;
-    }    
-    return config;
-})
+// operatorApi.interceptors.request.use ((config) => {
+//   const state = store.getState()
 
-export default api;
+//   const token = state.operatorAuth.accessToken
+
+//   if(token){
+//     config.headers.Authorization = `Bearer ${token}`
+//   }
+
+//   return config
+// }) 
+
+// export const adminAPi = axios.create ({
+//   baseURL : env.API_BASE_URL,
+//   withCredentials:true
+// })
+
+// adminAPi.interceptors.request.use((config) => {
+//   const state = store.getState()
+
+//   const token = state.adminAuth.accessToken
+
+//   if(token){
+//     config.headers.Authorization = `Bearer ${token}`
+//   }
+
+//   return config
+// })

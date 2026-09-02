@@ -6,7 +6,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import type { OperatorLoginFormData } from '@/types/auth.types'
 import logo from '../../../../../public/logo.png'
 import { operatorLogin } from '../../services/authService'
-import { setOperator } from '@/redux/slice/operatorAuthSlice'
+import { loginOperator } from '@/redux/slice/operatorAuthSlice'
 import {
   operatorLoginSchema,
   getValidationErrors,
@@ -65,12 +65,12 @@ const OperatorLoginSection = () => {
     try {
       const response = await operatorLogin(result.data)
 
-      dispatch(
-        setOperator({
-          operator: response.operator,
-          token: response.token,
-        })
-      );
+    dispatch(
+      loginOperator({
+        operator: response.operator,
+        accessToken: response.accessToken,
+      })
+    );
 
       toast.success(response.message)
 
@@ -92,6 +92,7 @@ const OperatorLoginSection = () => {
           localStorage.removeItem("token");
           navigate("/operator/login");
       }
+      
     } catch (error: any) {
       const message =
         error?.response?.data?.message ??

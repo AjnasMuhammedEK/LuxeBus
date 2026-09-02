@@ -3,48 +3,48 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 
 interface OperatorState {
   operator: any | null;
-  token: string | null;
+  accessToken: string | null;
+  isAuthenticated: boolean;
 }
 
+interface OperatorLoginPayload {
+  operator: any;
+  accessToken: string;
+}
+
+
 const initialState: OperatorState = {
-  operator: JSON.parse(localStorage.getItem("operator") || "null"),
-  token: localStorage.getItem("operatorToken"),
+  operator: null,
+  accessToken: null,
+  isAuthenticated: false,
 };
 
+
 const operatorAuthSlice = createSlice({
-  name: "operatorAuth",
-  initialState,
-  reducers: {
-    setOperator: (
-      state,
-      action: PayloadAction<{
-        operator: any;
-        token: string;
-      }>
-    ) => {
+  name : 'operatorAuth',
+  initialState , 
+
+  reducers : {
+    loginOperator : (state , action: PayloadAction<OperatorLoginPayload> ) => {
       state.operator = action.payload.operator;
-      state.token = action.payload.token;
-
-      localStorage.setItem(
-        "operator",
-        JSON.stringify(action.payload.operator)
-      )
-
-      localStorage.setItem(
-        "operatorToken",
-        action.payload.token
-      )
+      state.accessToken = action.payload.accessToken;
+      state.isAuthenticated = true; 
     },
 
-    clearOperator: (state) => {
+
+    setOperatorAccessToken: (state,action: PayloadAction<string>) => {
+      state.accessToken = action.payload;
+    },
+
+
+    logoutOperator: (state) => {
       state.operator = null;
-      state.token = null;
-      localStorage.removeItem("operator")
-      localStorage.removeItem("operatorToken")
-    },
-  },
+      state.accessToken = null;
+      state.isAuthenticated = false;
+    },    
+  }
 });
 
-export const {setOperator,clearOperator,} = operatorAuthSlice.actions;
+export const {loginOperator,setOperatorAccessToken,logoutOperator,} = operatorAuthSlice.actions;
 
 export default operatorAuthSlice.reducer;

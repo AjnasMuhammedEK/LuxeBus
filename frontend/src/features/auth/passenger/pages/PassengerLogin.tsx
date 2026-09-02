@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux'
 import toast from 'react-hot-toast'
 import type { UserLoginFormData } from '@/types/auth.types'
 import { userLogin } from '@/features/auth/services/authService'
-import { setUser } from '@/redux/slice/authSlice'
+import { login } from '@/redux/slice/authSlice'
 import {  passengerLoginSchema,getValidationErrors,} from '@/features/auth/passenger/validation/passengerAuthValidation'
 import { GoogleLogin } from '@react-oauth/google'
 import { googleLogin } from '@/features/auth/services/authService'
@@ -52,9 +52,9 @@ const LoginSection = () => {
     const response = await userLogin(result.data);
 
     dispatch(
-      setUser({
-        user: response.user,
-        token: response.token,
+      login({
+        user : response.user,
+        accessToken : response.accessToken
       })
     );
 
@@ -78,9 +78,9 @@ const LoginSection = () => {
       const response = await googleLogin(credential);
 
       dispatch(
-        setUser({
+        login({
           user: response.user,
-          token: response.token,
+          accessToken: response.accessToken,
         })
       );
 

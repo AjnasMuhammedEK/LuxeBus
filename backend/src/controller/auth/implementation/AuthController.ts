@@ -1,11 +1,12 @@
-import { Request , Response , NextFunction } from "express";
+import e, { Request , Response , NextFunction } from "express";
 import { IAuthController } from "../interfaces/IAuthController";
 import { IAuthService } from "../../../services/auth/interface/IAuthService";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../DI/types";
-
+ 
 @injectable()
 export class AuthController implements IAuthController {
+    
     constructor(@inject(TYPES.AuthService) private authService:IAuthService){}
 
     userReguister = async (req: Request, res: Response, next: NextFunction) => {
@@ -32,12 +33,46 @@ export class AuthController implements IAuthController {
             const {email , password} = req.body 
 
             const response = await this.authService.userLogin({email , password})
+            
+            
+            res.cookie('refresh_token_user' , response.refreshToken , {
+                httpOnly:true,
+                secure:false,
+                sameSite:'strict',
+                maxAge:24*60*60*1000
+            })
+            
             console.log(response);
-            res.status(200).json(response)
+            res.status(200).json({
+                success:response.success,
+                message : response.message,
+                user:response.user,
+                accessToken : response.accessToken
+            })
             
         } catch (error) {
             console.log('ERROR in AuthCOntroller user Login :',error) 
             next(error);  
+        }
+    }
+
+    userLogout = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            res.clearCookie('refresh_token_user',{
+                httpOnly:true,
+                secure :false,
+                sameSite:'strict'
+                
+            })
+
+            res.status(200).json({
+                success:true,
+                message :'User Logout SuccessFully'
+            })
+        } catch (error) {
+            console.log('Error In UserLogout' , error)
+            next(error)
+            
         }
     }
 
@@ -63,15 +98,50 @@ export class AuthController implements IAuthController {
     
     operatorLogin = async (req: Request, res: Response, next: NextFunction)=>{
         try {
-            console.log('--------------')
+            // console.log('--------------')
             const {email , password} = req.body
-            console.log(req.body)
+            // console.log(req.body)
             const response = await this.authService.operatorLogin({email,password})
-            res.status(200).json(response)
+
+            res.cookie('refresh_Token_Operator',response.refreshToken,{
+                httpOnly:true,
+                secure:false,
+                sameSite:'strict',
+                maxAge:24*60*60*1000
+            })
+            res.status(200).json({
+                success:true,
+                message:response.message,
+                operator:response.operator,
+                accessToken:response.accessToken
+            })
             
         } catch (error) {
             console.log('ERROR in AuthCOntroller operator Login :',error) 
             next(error); 
+        }
+    }
+
+    operatorLogout = async (req: Request, res: Response, next: NextFunction)=> {
+        try {
+
+
+            // console.log('Called The ---------============')
+            res.clearCookie('refresh_Token_Operator',{
+                httpOnly:true,
+                secure:false,
+                sameSite:"strict"
+            })
+
+            // console.log('Called 2222222222222222222222 The ---------============')
+
+            res.status(200).json({
+                success:true,
+                message:'Operator Logout SuccessFully'
+            })            
+        } catch (error) {
+            console.log('Error In operatorLogout ' , error)
+            next(error)          
         }
     }
 
@@ -80,8 +150,20 @@ export class AuthController implements IAuthController {
             const {email , password} = req.body 
 
             const response = await this.authService.AdminLogin({email , password})
-            console.log(response);
-            res.status(200).json(response)
+            // console.log(response);
+
+            res.cookie('refresh_token_admin',response.refreshToken,{
+                httpOnly:true,
+                secure:false,
+                sameSite:'strict',
+                maxAge:24*60*60*1000
+            })
+            res.status(200).json({
+                success:true,
+                message : response.message,
+                admin : response.admin,
+                accessToken : response.accessToken
+            })
             
         } catch (error) {
             console.log('ERROR in AuthCOntroller Admin Login :',error) 
@@ -89,6 +171,26 @@ export class AuthController implements IAuthController {
         }
     }
 
+    adminLogout = async (req: Request, res: Response, next: NextFunction)=>{
+        try {
+
+            res.clearCookie('refresh_token_admin',{
+                httpOnly:true,
+                secure:false,
+                sameSite:'strict'
+            })   
+            
+            res.status(200).json({
+                success:true,
+                message : 'Admin logout successfully'
+            })
+        } catch (error) {
+            console.log('Error In admin Logout' , error)
+            next(error)
+        }
+
+        
+    }
     userForgottPasswordEmailVerify = async(req: Request, res: Response, next: NextFunction)=>{
         try {
             const {email} = req.body
@@ -138,5 +240,91 @@ export class AuthController implements IAuthController {
             next(error);
         }
     }
+
+
+    userRefreshToken = async (req: Request, res: Response, next: NextFunction) =>  {
+        try {
+            
+            const refreshToken = req.cookies?.refresh_token_user
+
+            if(!refreshToken){
+                res.status(401).json({
+                    success:false,
+                    message : 'Refresh Token is not found'
+                })
+
+                return
+            }
+
+            const response = await this.authService.userRefreshToken(
+                refreshToken
+            )
+
+            res.status(200).json({
+                success:true,
+                accessToken : response.accessToken
+
+            })
+        } catch (error) {
+            console.log("ERROR in AuthController refreshUserToken:",error);
+            next(error);
+           
+        }
+    }
+
+    adminRefreshToken = async (req: Request, res: Response, next: NextFunction)=> {
+        
+        try {
+            const refreshToken = req.cookies?.refresh_token_admin
+
+            if(!refreshToken){
+                res.status(401).json({
+                    success:false,
+                    message : 'RefreshToken Not Found'
+                })
+
+                return
+            }
+
+            const response = await this.authService.adminRefreshToken(refreshToken)
+
+            res.status(200).json({
+                success:true, 
+                accessToken : response.accessToken
+            })            
+        } catch (error) {
+            console.log("ERROR in AuthController adminRefreshToken:",error);
+            next(error);
+        }
+
+    }
+
+    operatorRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            
+            const refreshTokne = req.cookies?.refresh_Token_Operator
+
+            if(!refreshTokne){
+                res.status(401).json({
+                    success:false,
+                    message : 'Refresh TOken Not Found'
+                })
+
+                return
+            }
+
+            const response = await this.authService.operatorRefreshToken(refreshTokne)
+
+            res.status(200).json({
+                successs:true, 
+                accessToken: response.accessToken
+            })
+
+        } catch (error) {
+            console.log("ERROR in AuthController operatorRefreshToken:",error);
+            next(error);   
+        }
+    }
+  
     
 }

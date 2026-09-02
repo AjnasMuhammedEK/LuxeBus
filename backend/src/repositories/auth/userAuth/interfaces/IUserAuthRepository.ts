@@ -6,4 +6,5 @@ export interface IUserAuthRepository {
     findUserByEmail(email:string): Promise<UserDocument  | null>
     updateUser(email:string , data : Partial<IUser>):Promise<IUser | null>
     createGoogleUser(user: IUser): Promise<UserDocument>;
+    findUserById(id:string):Promise<UserDocument | null>
 }

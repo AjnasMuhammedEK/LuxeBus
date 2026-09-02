@@ -3,7 +3,8 @@ import { Bell, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import logo from "../../../../public/logo.png";
-import { clearUser } from "@/redux/slice/authSlice";
+import { logout } from "@/redux/slice/authSlice";
+import { userLogout } from "@/features/auth/services/authService";
 
 interface NavLinkItem {
   label: string;
@@ -21,9 +22,16 @@ const PassengerNavbar = () => {
   const user = useSelector((state: any) => state.auth.user);
   const dispatch = useDispatch();
 
-  const handleLogout = () => {
-    dispatch(clearUser());
-    localStorage.removeItem('token');
+  const handleLogout = async () => {
+    try {
+      
+      await userLogout()
+
+      dispatch(logout())
+    } catch (error) {
+      console.log("User Logout failed:", error);
+
+    }
   };
 
   return (

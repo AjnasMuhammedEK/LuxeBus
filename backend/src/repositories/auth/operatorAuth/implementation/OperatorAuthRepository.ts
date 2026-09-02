@@ -18,4 +18,8 @@ export class OperatorAuthRepository extends BaseRepositary<IOperator> implements
     async findOperatorByEmail(email: string): Promise<OperatorDocument | null> {
         return await this.findOne({email})
     }
+
+    async findOperatorById(id : string):Promise<OperatorDocument | null>{
+        return await this.findById(id)
+    }
 }

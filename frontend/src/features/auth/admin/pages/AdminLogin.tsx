@@ -10,6 +10,7 @@ import {
 } from "@/features/auth/admin/validation/AdminAuthValidation";
 import { adminLogin } from "../../services/authService";
 import { loginAdmin } from "@/redux/slice/adminAuthSlice";  
+import axios from "axios";
 
 type FormErrors = Partial<Record<keyof UserLoginFormData, string>>;
 
@@ -62,17 +63,18 @@ const SuperAdminLogin = () => {
 
     dispatch(
       loginAdmin({
-        admin: response.admin,
-        accessToken: response.accessToken,
+        admin: response.data.admin,
+        accessToken: response.data.accessToken,
       })
     );
 
       toast.success(response.message);
 
       navigate("/admin/dashboard",{replace:true});
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ?? error?.message ?? "Login failed";
+    } catch (error) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? "Login failed"
+        : "Login failed";
 
       toast.error(message);
     } finally {

@@ -1,14 +1,15 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import type { IOperator } from "@/types/operator.types";
 
 interface OperatorState {
-  operator: any | null;
+  operator: IOperator | null;
   accessToken: string | null;
   isAuthenticated: boolean;
 }
 
 interface OperatorLoginPayload {
-  operator: any;
+  operator: IOperator;
   accessToken: string;
 }
 

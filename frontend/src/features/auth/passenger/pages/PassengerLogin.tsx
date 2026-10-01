@@ -3,6 +3,7 @@ import { Mail, Lock } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import toast from 'react-hot-toast'
+import axios from 'axios'
 import type { UserLoginFormData } from '@/types/auth.types'
 import { userLogin } from '@/features/auth/services/authService'
 import { login } from '@/redux/slice/authSlice'
@@ -50,24 +51,25 @@ const LoginSection = () => {
 
   try {
     const response = await userLogin(result.data);
+    // console.log(response.data.user)
 
     dispatch(
       login({
-        user : response.user,
-        accessToken : response.accessToken
+        user : response.data.user,
+        accessToken : response.data.accessToken
       })
     );
 
     toast.success(response.message);
 
     navigate("/");
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.message ??
-      error?.message ??
-      "Login failed";
+} catch (error) {
+  const message = axios.isAxiosError(error)
+    ? error.response?.data?.message ?? "Login failed"
+    : "Login failed";
 
-    toast.error(message);
+  toast.error(message);
+
   } finally {
     setIsSubmitting(false);
   }
@@ -79,18 +81,18 @@ const LoginSection = () => {
 
       dispatch(
         login({
-          user: response.user,
-          accessToken: response.accessToken,
+          user: response.data.user,
+          accessToken: response.data.accessToken,
         })
       );
 
       toast.success(response.message);
 
       navigate("/");
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Google login failed"
-      );
+    } catch   {
+
+      const message ="Google login failed"
+      toast.error(message);
     }
   };
   return (

@@ -15,7 +15,7 @@ import { IUserAuthRepository } from '../../../repositories/auth/userAuth/interfa
 import { IOperatorAuthRepository } from '../../../repositories/auth/operatorAuth/interfaces/IOperatorAuthRepository';
 import { IOperatorRegisterData } from '../../../types/operator';
 import logger from '../../../config/logger';
-import { IUserMappedData } from '../../../types/user';
+
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -87,8 +87,6 @@ export class AuthService implements IAuthService {
       
 
         return {
-            success: true,
-            message: "Login Successful",
             user: userDataMapping(existUser),
             accessToken,
             refreshToken
@@ -136,7 +134,8 @@ export class AuthService implements IAuthService {
             registrationCertificate,
             taxCertificate,
             transportLicense,
-            status: "pending"
+            status: "pending",
+            isBlocked: false
 
         });
     }
@@ -156,13 +155,15 @@ export class AuthService implements IAuthService {
             throw new Error('Incorrect Password')
         }
 
+        if(exist.isBlocked){
+            throw new Error('operator account has been blocked ! please contact our support team')
+        }
+
         const accessToken = generateAccessToken(exist._id.toString() ,exist.role)
 
         const refreshToken = generateRefreshToken(exist._id.toString() ,exist.role)
 
         return{
-            success: true,
-            message: "Login Successful",
             operator: operatorDataMapping(exist),
             accessToken,
             refreshToken
@@ -192,8 +193,6 @@ export class AuthService implements IAuthService {
         const refreshToken = generateRefreshToken(existAdmin._id.toString(),existAdmin.role);
 
         return {
-            success: true,
-            message: "Admin Login Successful",
             admin : userDataMapping(existAdmin),
             accessToken,
             refreshToken
@@ -308,8 +307,6 @@ export class AuthService implements IAuthService {
         const refreshToken = generateRefreshToken(existUser._id.toString(),existUser.role);
 
         return {
-            success: true,
-            message: "Google Login Successful",
             user: userDataMapping(existUser),
             accessToken,
             refreshToken

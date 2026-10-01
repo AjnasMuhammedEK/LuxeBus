@@ -11,7 +11,7 @@ export const generateAccessToken = (id : string , role : string) : string => {
   return jwt.sign (
     {id , role},
     process.env.JWT_SECRET!,
-    {expiresIn : '20s'}
+    {expiresIn : '1m'}
   )
 }
 
@@ -20,7 +20,7 @@ export const generateRefreshToken = (id : string , role : string) : string  => {
   return jwt.sign(
     {id , role},
     process.env.REFRESH_JWT_SECRET!,
-    {expiresIn : '1m'}
+    {expiresIn : '5m'}
   )
 }
 
@@ -32,6 +32,7 @@ export const verifyAccessToken = (token : string) : DecodedUser | null => {
 
     return decoded
   } catch (error) {
+    console.log('Error in verifyAccessToken', error)
     return null
   }
    
@@ -44,6 +45,7 @@ export const  verifyRefreshToken = (token : string) : DecodedUser | null => {
 
     return decoded
   } catch (error) {
+    console.log('Error in verifyRefreshToken', error)
     return null
   }
 }

@@ -78,11 +78,10 @@ const SignUpSection = () => {
       setTimeout(() => {
         navigate('/login')
       },2000)
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ??
-        error?.message ??
-        'Registration failed. Please try again.'
+    } catch  {
+
+      const message ="Registration failed. Please try again.";
+ 
       toast.error(message)
     } finally {
       setIsSubmitting(false)

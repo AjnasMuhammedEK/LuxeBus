@@ -5,6 +5,8 @@ import { useSelector, useDispatch } from "react-redux";
 import logo from "../../../../public/logo.png";
 import { logout } from "@/redux/slice/authSlice";
 import { userLogout } from "@/features/auth/services/authService";
+import type { RootState } from "@/redux/store/store";
+
 
 interface NavLinkItem {
   label: string;
@@ -19,7 +21,7 @@ const navLinks: NavLinkItem[] = [
 
 const PassengerNavbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const user = useSelector((state: any) => state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
 
   const handleLogout = async () => {

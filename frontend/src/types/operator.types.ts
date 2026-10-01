@@ -18,6 +18,7 @@ export interface IOperator {
 
     role:"operator";
 
+    isBlocked : boolean
 
     status:
     | "pending"

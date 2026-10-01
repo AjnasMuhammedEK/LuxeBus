@@ -17,8 +17,14 @@ const PublicRoute = ({role} : PublicRouteProps) =>{
         return <Navigate to='/' replace/>
     }
 
-    if(role === 'operator' && operator) {
-        return <Navigate to="/operator/home" replace />;
+    if (role === "operator" && operator) {
+        if (operator.status === "approved") {
+            return <Navigate to="/operator/home" replace />;
+        }
+
+        if (operator.status === "pending" || operator.status === "rejected") {
+            return <Navigate to="/operator/status" replace />;
+        }
     }
 
     if(role === 'admin' && admin) {

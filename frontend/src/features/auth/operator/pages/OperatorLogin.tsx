@@ -11,6 +11,7 @@ import {
   operatorLoginSchema,
   getValidationErrors,
 } from '@/features/auth/operator/validation/operatorAuthValidation'
+import axios from 'axios'
 
 type FormErrors = Partial<Record<keyof OperatorLoginFormData, string>>
 
@@ -67,24 +68,30 @@ const OperatorLoginSection = () => {
 
     dispatch(
       loginOperator({
-        operator: response.operator,
-        accessToken: response.accessToken,
+        operator: response.data.operator,
+        accessToken: response.data.accessToken,
       })
     );
 
       toast.success(response.message)
 
-      switch (response.operator.status) {
+      console.log(response)
+
+      console.log('--------')
+      console.log(response.data.operator.status)
+
+
+      // if(response.data.operator.stat)
+
+      switch (response.data.operator.status) {
         case "approved":
           navigate("/operator/home");
-          break;
-
-        case "pending":
-          navigate("/operator/status");
+          console.log('approved')
           break;
 
         case "rejected":
           navigate("/operator/status");
+          console.log('rejected')
           break;
 
         default:
@@ -92,14 +99,15 @@ const OperatorLoginSection = () => {
           localStorage.removeItem("token");
           navigate("/operator/login");
       }
-      
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ??
-        error?.message ??
-        'Login failed'
 
-      toast.error(message)
+      console.log('----=========-----------=========---------')
+      
+} catch (error) {
+  const message = axios.isAxiosError(error)
+    ? error.response?.data?.message ?? "Login failed"
+    : "Login failed";
+
+  toast.error(message);
     } finally {
       setIsSubmitting(false)
     }

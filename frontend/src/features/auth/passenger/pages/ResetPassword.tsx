@@ -4,7 +4,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { userResetPassword } from '../../services/authService'
 import {resetPasswordSchema,getValidationErrors,} from '@/features/auth/passenger/validation/passengerAuthValidation'
-import { tr } from 'zod/v4/locales'
 
 type ResetPasswordFormData = {
   password: string
@@ -18,7 +17,7 @@ const ResetPasswordSection = () => {
 
    
   const email = (location.state as { email?: string })?.email ?? ''
-  const otp = (location.state as { otp?: string })?.otp ?? ''
+
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
@@ -62,8 +61,8 @@ const ResetPasswordSection = () => {
             navigate('/login')
         },2000)
         
-    } catch (error) {
-        toast.error(error?.response?.data?.message || error?.message || 'Something went wrong')
+    } catch  {
+        toast.error('Something went wrong')
     }finally{
         setIsSubmitting(false)
     }

@@ -3,14 +3,13 @@ import authReducer from '../slice/authSlice'
 import operatorAuthReducer from '../slice/operatorAuthSlice'
 import adminAuthReducer from "../slice/adminAuthSlice";
 import storageModule from "redux-persist/lib/storage";
-
-const storage = (storageModule as any).default ?? storageModule;
 import {persistReducer , persistStore} from "redux-persist"
 
-console.log("storage:", storage);
-console.log("getItem:", storage.getItem);
-console.log("setItem:", storage.setItem);
-console.log("removeItem:", storage.removeItem);
+
+const storage =
+  "getItem" in storageModule
+    ? storageModule
+    : storageModule.default;
 
 const persistConfig = {
   key : 'root',

@@ -1,5 +1,4 @@
-import React from 'react'
-import { MessageCircle, AtSign, Globe, MapPin, Mail, Phone, Smartphone, PlayCircle } from "lucide-react";
+import { MessageCircle, AtSign, Globe, MapPin, Mail, Phone, Smartphone } from "lucide-react";
 
 interface FooterLink {
   label: string;

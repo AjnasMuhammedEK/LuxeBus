@@ -14,22 +14,22 @@ export const registerUser = async (data:UserRegisterFormData) => {
 
 export const userLogin = async (data : UserLoginFormData) => {
     const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/login`,data)
-   return response.data
+    return response.data
 }
 
 export const operatorRegister = async (data : FormData) => {
     const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/operatorRegister`,data)
-   return response.data
+    return response.data
 }
 
 export const operatorLogin = async (data:OperatorLoginFormData) =>{
     const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/operatorLogin`,data)
-   return response.data
+    return response.data
 }
 
 export const adminLogin = async (data : UserLoginFormData) => {
     const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/adminLogin`,data)
-   return response.data
+    return response.data
 }
 
 export const userForgotPasswordEmailVerification = async (data : userForgotPasswordEmailVeryfication) => {
@@ -48,8 +48,8 @@ export const userResetPassword = async (data:UserResetPassword) => {
 }
 
 export const googleLogin = async (credential: string) => {
- const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/googleLogin`,{credential,});
-  return response.data;
+    const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/googleLogin`,{credential,});
+    return response.data;
 };
 
 

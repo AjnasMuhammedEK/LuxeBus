@@ -7,5 +7,8 @@ export const TYPES = {
   AdminRepository: Symbol.for("AdminRepository"),
   AdminService: Symbol.for("AdminService"),
   AdminController: Symbol.for("AdminController"),
-  EmailService:Symbol.for('EmailService')
+  EmailService:Symbol.for('EmailService'),
+  StaffRepository:Symbol.for('StaffRepository'),
+  StaffService: Symbol.for('StaffService'),
+  StaffController: Symbol.for('StaffController')
 };

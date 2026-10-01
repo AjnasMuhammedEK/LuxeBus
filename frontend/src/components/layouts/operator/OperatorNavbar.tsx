@@ -5,8 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { logoutOperator } from "@/redux/slice/operatorAuthSlice";
 
 import { operatorLogout } from "@/features/auth/services/authService";
+import type { RootState } from "@/redux/store/store";
+
 const OperatorNavbar = () => {
-  const user = useSelector((state: any) => state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -14,6 +16,7 @@ const OperatorNavbar = () => {
     try {
       await operatorLogout()
       dispatch(logoutOperator())
+      navigate("/operator/login");
 
     } catch (error) {
       console.log("Operator Logout failed:", error);

@@ -112,8 +112,9 @@ const ForgotPasswordSection = () => {
       setSent(true)
       setSecondsLeft(RESEND_SECONDS)
       setOtp(Array(OTP_LENGTH).fill(''))
-    } catch (error : any) {
-      toast.error(error?.response?.data?.message ||error?.message ||"Something went wrong");
+    } catch  {
+      const message = "Something went wrong"
+      toast.error(message);
     } finally{
       setIsSubmitting(false)
     }
@@ -129,8 +130,9 @@ const ForgotPasswordSection = () => {
       setSecondsLeft(RESEND_SECONDS)
       setOtp(Array(OTP_LENGTH).fill(''))
       otpInputRefs.current[0]?.focus()
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || 'Something went wrong')
+    } catch {
+      const message = 'Something went wrong'
+      toast.error(message)
     } finally {
       setIsResending(false)
     }
@@ -149,8 +151,9 @@ const ForgotPasswordSection = () => {
       const response = await userVerifyForgotPasswordOtp({ email: formData.email, otp: code })
       toast.success(response?.message || 'OTP_verified')
       navigate('/resetPassword', { state: { email: formData.email, otp: code } })
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || 'Invalid or expired code')
+    } catch {
+      const message = 'Invalid or expired code'
+      toast.error(message)
     } finally {
       setIsVerifying(false)
     }

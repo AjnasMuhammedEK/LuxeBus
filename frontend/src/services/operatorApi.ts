@@ -1,4 +1,4 @@
-import axios ,{type AxiosError , type InternalAxiosRequestConfig} from "axios";
+import axios  from "axios";
 import env from "@/config/env";
 import { store } from "@/redux/store/store";
  
@@ -35,7 +35,7 @@ opperatorApi.interceptors.response.use((response) => response, async (error) => 
             
             const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/operator-refresh-token`)
 
-            const accessToken = response.data.accessToken
+            const accessToken = response.data.data.accessToken
 
             if(accessToken){
                 store.dispatch(setOperatorAccessToken(accessToken))

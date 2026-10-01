@@ -20,6 +20,12 @@ import { AdminService } from "../services/AdminServices/implementation/AdminServ
 import { AdminController } from "../controller/admin/implementation/AdminController";
 import { IEmailService } from "../services/email/interface/IEmailService";
 import { EmailService } from "../services/email/implementation/EmailService";
+import { IstaffService } from "../services/operatorService/staff/interface/IstaffService";
+import { IStaffRepository } from "../repositories/syaffRepository/interface/IStaffRepository";
+import { StaffRepository } from "../repositories/syaffRepository/implimentation/staffRepository";
+import { StaffService } from "../services/operatorService/staff/implimentation/staffService";
+import { IStaffController } from "../controller/operator/staff/interface/IStaffController";
+import { StaffController } from "../controller/operator/staff/implimentation/StaffController";
 
 export const container = new Container();
 
@@ -58,3 +64,16 @@ container
 container
 .bind<IEmailService>(TYPES.EmailService)
 .to(EmailService)
+
+
+container
+.bind<IStaffRepository>(TYPES.StaffRepository)
+.to(StaffRepository)
+
+container
+    .bind<IstaffService>(TYPES.StaffService)
+    .to(StaffService);
+
+container
+.bind<IStaffController>(TYPES.StaffController)
+.to(StaffController)

@@ -16,8 +16,29 @@ export class AdminService implements IAdminService {
 
     ) {}
 
-    async getOperators(): Promise<IOperator[]> {
-        return await this.adminRepository.getOperators();
+    async getOperators(page: number,limit: number,search: string,sortBy: string,sortOrder: string)  {
+ 
+        const result = await this.adminRepository.getOperators(
+            page,
+            limit,
+            search,
+            sortBy,
+            sortOrder
+        );
+
+        const totalPages = Math.ceil(
+            result.totalItems / limit
+        );
+
+        return {
+            operators: result.operators,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalItems: result.totalItems,
+                limit,
+            },
+        };
     }
 
     async updateOperatorStatus(operatorId: string,status: string): Promise<IOperator> {
@@ -33,5 +54,15 @@ export class AdminService implements IAdminService {
 
     async getDocumentSignedUrl(objectKey: string): Promise<string> {
         return await this.storageService.getSignedUrl(objectKey)
+    }
+
+    async updateOperatorBlock(operatorId: string, isBlocked: boolean): Promise<IOperator> {
+        const operator = await this.adminRepository.updateOperatorBlock(operatorId,isBlocked)
+
+        if(!operator){
+            throw new Error('Operator not Found')
+        }
+
+        return operator
     }
 }

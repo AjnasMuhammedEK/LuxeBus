@@ -16,6 +16,7 @@ export interface IOperator {
   taxCertificate: string
   transportLicense : string;
   status: OperatorStatus;
+  isBlocked: boolean;
 }
 
 export interface IOperatorMappedData {
@@ -45,4 +46,16 @@ export interface IOperatorRegisterData {
   yearOfIncorporation: string;
   panNumber: string;
   authorisedRepresentative: string;
+}
+
+export interface IOperatorPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+}
+
+export interface IOperatorListResponse {
+  operators: IOperator[];
+  pagination: IOperatorPagination;
 }

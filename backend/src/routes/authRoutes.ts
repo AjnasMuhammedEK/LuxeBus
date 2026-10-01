@@ -3,7 +3,7 @@ import { container } from "../DI/container";
 import {TYPES} from '../DI/types'
 import { AuthController } from "../controller/auth/implementation/AuthController";
 import upload from "../middleware/multer";
-import { authMiddleware } from "../middleware/authMiddleware";
+
 
 const router = Router()
 

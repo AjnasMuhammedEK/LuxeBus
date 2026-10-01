@@ -1,4 +1,4 @@
-import axios ,{type AxiosError , type InternalAxiosRequestConfig} from "axios";
+import axios from "axios";
 import env from "@/config/env";
 import { store } from "@/redux/store/store";
  
@@ -34,7 +34,7 @@ adminApi.interceptors.response.use((response) => response , async (error) => {
         try {
             
             const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/admin-refresh-token`)
-            const accessToken = response.data.accessToken
+            const accessToken = response.data.data.accessToken
 
             if(accessToken){
                 store.dispatch(setAdminAccessToken(accessToken))

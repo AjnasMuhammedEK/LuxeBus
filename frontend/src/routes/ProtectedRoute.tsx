@@ -16,7 +16,16 @@ const ProtectedRoute = ({ role }: ProtectedRouteProps) => {
   }
 
   if (role === "operator") {
-    return operator ? <Outlet /> : <Navigate to="/operator/login" replace />;
+
+      if (!operator) {
+          return <Navigate to="/operator/login" replace />;
+      }
+
+      if (operator.status !== "approved") {
+          return <Navigate to="/operator/status" replace />;
+      }
+
+      return <Outlet />;
   }
 
   if (role === "admin") {

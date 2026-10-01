@@ -1,12 +1,8 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import {
   LayoutDashboard,
   Bus,
-  Ticket,
-  Users,
-  FileBarChart2,
-  Landmark,
   UserCircle,
   LogOut,
 } from "lucide-react";
@@ -31,7 +27,7 @@ const mainLinks: SidebarLinkItem[] = [
 
 const AdminSidebar = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+ 
 
   const handleLogout = async () => {
     try {

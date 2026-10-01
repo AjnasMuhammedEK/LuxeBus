@@ -9,6 +9,7 @@ import adminRoutes from './routes/adminRoutes'
 import redisclient from './config/redis'
 import logger from './config/logger'
 import cookieParser from 'cookie-parser'
+import operatorRoutes from './routes/operatorRoutes'
 
 
 dotenv.config()
@@ -25,6 +26,7 @@ app.use(cors({
 
 app.use("/api/auth", authRoutes)
 app.use('/api/admin',adminRoutes)
+app.use('/api/operator',operatorRoutes)
 
 app.use(errorHandler);
 

@@ -1,24 +1,10 @@
 import { useEffect, useState } from 'react'
-import {Bus,Users,Ticket,Wallet,TrendingUp,ArrowUpRight,ChevronRight,X,FileText,ExternalLink,} from 'lucide-react'
-import { getOperators, updateOperatorStatus } from '@/features/admin/services/adminService'
-import { getSignedDocmunetUrl } from '@/features/admin/services/adminService'
- 
-interface Operator {
-  _id: string
-  ownerName: string
-  legalEntityName: string
-  email: string
-  phone: string
-  gstNumber: string
-  yearOfIncorporation: string
-  panNumber: string
-  authorisedRepresentative: string
-  registrationCertificate: string
-  taxCertificate: string
-  transportLicense: string
-  status: string
-  createdAt: string
-}
+import { Bus, Users, Ticket, Wallet, TrendingUp, ArrowUpRight, Search, X, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { getOperators, updateOperatorStatus, updateOperatorBlockStatus } from '@/features/admin/services/adminService'
+import OperatorDetailsModal, {
+  StatusBadge,
+  type Operator,
+} from '@/features/admin/components/OperatorDetailsModal'
 
 interface StatCardData {
   label: string
@@ -26,211 +12,20 @@ interface StatCardData {
   delta: string
   icon: typeof Bus
 }
- 
 
-interface DocumentRowProps {
+const sortOptions = [
+  { value: 'legalEntityName', label: 'Agency Name' },
+  { value: 'ownerName', label: 'Owner Name' },
+  { value : 'createdAt' , label :'Joining Date'}
+  
+]
 
-    label: string;
-
-    objectKey: string;
-
+const getPageNumbers = (current: number, total: number): (number | '...')[] => {
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1)
+  if (current <= 3) return [1, 2, 3, 4, '...', total]
+  if (current >= total - 2) return [1, '...', total - 3, total - 2, total - 1, total]
+  return [1, '...', current - 1, current, current + 1, '...', total]
 }
-
-const statusStyles: Record<string, string> = {
-  Pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
-  pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
-  'Under Review': 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  under_review: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  Approved: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
-  approved: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
-  Rejected: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200',
-  rejected: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200',
-}
-
-const StatusBadge = ({ status }: { status: string }) => (
-  <span
-    className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-      statusStyles[status] ?? 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200'
-    }`}
-  >
-    {status}
-  </span>
-)
-
-
-const handleDoumentView = async (objectKey : string) => {
-  try {
-    const response = await getSignedDocmunetUrl(objectKey)
-    console.log('response ------------- ', response)
-console.log('response.signerUrl ------------------ ',response.signerUrl)
-    window.open(response.signedUrl,'_blank')
-  } catch (error) {
-    console.log(error);
-
-  }
-}
- 
- 
-const DocumentRow = ({
-    label,
-    objectKey
-}: DocumentRowProps) => (
-
-    <button
-
-        onClick={() => handleDoumentView(objectKey)}
-
-        className="flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 hover:bg-blue-50"
-
-    >
-
-        <div className="flex items-center gap-3">
-
-            <FileText className="h-5 w-5 text-blue-600"/>
-
-            <span>{label}</span>
-
-        </div>
-
-        <ExternalLink className="h-5 w-5"/>
-
-    </button>
-
-);
-
-
-interface OperatorModalProps {
-  operator: Operator
-  onClose: () => void
-  onStatusChange: (id: string, status: string) => void
-  updating: boolean
-}
-
-const OperatorDetailsModal = ({ operator, onClose, onStatusChange, updating }: OperatorModalProps) => {
-  const [status, setStatus] = useState(operator.status)
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-8">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between bg-blue-950 px-6 py-5">
-          <div>
-            <h2 className="text-base font-semibold text-white">{operator.legalEntityName}</h2>
-            <p className="mt-0.5 text-xs text-blue-200">Operator Details</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-blue-200 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-6 px-6 py-6">
-          {/* Status selector */}
-          <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Application Status
-            </span>
-            <div className="flex items-center gap-3">
-              <StatusBadge status={operator.status} />
-
-              <select
-                value={status}
-                disabled={updating}
-                onChange={(e) => setStatus(e.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
-              >
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-
-              <button
-                onClick={() => onStatusChange(operator._id, status)}
-                disabled={updating || status === operator.status}
-                className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50"
-              >
-                {updating ? 'Updating...' : 'Update Status'}
-              </button>
-
-              {updating && <span className="text-xs text-slate-400">Updating...</span>}
-            </div>
-          </div>
-
-          {/* Basic info */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Owner Name</span>
-              <p className="mt-1 text-sm font-medium text-slate-900">{operator.ownerName}</p>
-            </div>
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Authorised Representative
-              </span>
-              <p className="mt-1 text-sm font-medium text-slate-900">{operator.authorisedRepresentative}</p>
-            </div>
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Email</span>
-              <p className="mt-1 text-sm font-medium text-slate-900">{operator.email}</p>
-            </div>
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Phone</span>
-              <p className="mt-1 text-sm font-medium text-slate-900">{operator.phone}</p>
-            </div>
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">GST Number</span>
-              <p className="mt-1 text-sm font-medium text-slate-900">{operator.gstNumber}</p>
-            </div>
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">PAN Number</span>
-              <p className="mt-1 text-sm font-medium text-slate-900">{operator.panNumber}</p>
-            </div>
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Year of Incorporation
-              </span>
-              <p className="mt-1 text-sm font-medium text-slate-900">{operator.yearOfIncorporation}</p>
-            </div>
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Registered On
-              </span>
-              <p className="mt-1 text-sm font-medium text-slate-900">
-                {new Date(operator.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-
-          {/* Documents */}
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Uploaded Documents
-            </span>
-            <div className="mt-2 flex flex-col gap-2">
-               <DocumentRow
-                    label="Registration Certificate"
-                    objectKey={operator.registrationCertificate}
-                />
-
-                <DocumentRow
-                    label="Tax Certificate"
-                    objectKey={operator.taxCertificate}
-                />
-
-                <DocumentRow
-                    label="Transport License"
-                    objectKey={operator.transportLicense}
-                />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 
 const MasterCommandCenter = () => {
   const [operators, setOperators] = useState<Operator[]>([])
@@ -238,30 +33,96 @@ const MasterCommandCenter = () => {
   const [error, setError] = useState('')
   const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [blocking, setBlocking] = useState(false)
+
+  const [page, setPage] = useState(1)
+  const [limit] = useState(10)
+
+  const [search, setSearch] = useState("")
+
+  const [sortBy, setSortBy] = useState("createdAt")
+
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+
+  const [totalPages, setTotalPages] = useState(1)
+
+  const [totalOperators, setTotalOperators] = useState(0)
+
 
   useEffect(() => {
-    fetchOperators()
-  }, [])
+    let cancelled = false
 
-  const fetchOperators = async () => {
+    const loadOperators = async () => {
+      try {
+        setLoading(true)
+        setError('')
+
+        const response = await getOperators({
+          page,
+          limit,
+          search,
+          sortBy,
+          sortOrder,
+        })
+
+        if (cancelled) return
+
+        console.log(response.data)
+
+        setOperators(response.data?.operators ?? [])
+        setTotalPages(response.data?.pagination?.totalPages ?? 1)
+        setTotalOperators(response.data?.pagination?.totalItems ?? 0)
+      } catch (err) {
+        if (cancelled) return
+
+        console.error(err)
+        setOperators([])
+        setError('Failed to fetch operators')
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void loadOperators()
+
+    return () => {
+      cancelled = true
+    }
+  }, [page, search, sortBy, sortOrder, limit])
+
+
+
+  const [searchInput, setSearchInput] = useState('')
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput)
+      setPage(1)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+
+  const handleBlockToggle = async (id: string, isBlocked: boolean) => {
     try {
-      setLoading(true)
-      setError('')
+      setBlocking(true)
+      await updateOperatorBlockStatus(id, isBlocked)
 
-      const response = await getOperators()
-        console.log(response)
-      setOperators(Array.isArray(response) ? response : response.operators ?? [])
-      // const totalOperators = operators.length;
+      setOperators((prev) =>
+        prev.map((op) => (op._id === id ? { ...op, isBlocked } : op))
+      )
+      setSelectedOperator((prev) => (prev && prev._id === id ? { ...prev, isBlocked } : prev))
     } catch (err) {
       console.error(err)
-      setError('Failed to fetch operators')
     } finally {
-      setLoading(false)
+      setBlocking(false)
     }
   }
 
   const stats: StatCardData[] = [
-  { label: 'Total Travel Operators', value: operators.length.toString(), delta: '+2 This Month', icon: Bus },
+  { label: 'Total Travel Operators', value: totalOperators.toString(), delta: '+2 This Month', icon: Bus },
   { label: 'Total Passengers', value: 'comming soon', delta: '+12.5%', icon: Users },
   { label: 'Total Bookings', value: 'comming soon', delta: '852 Pending', icon: Ticket },
 ]
@@ -281,6 +142,9 @@ const MasterCommandCenter = () => {
       setUpdatingStatus(false)
     }
   }
+
+  const showingFrom = totalOperators === 0 ? 0 : (page - 1) * limit + 1
+  const showingTo = Math.min(page * limit, totalOperators)
 
   return (
     <section className="min-h-screen w-full bg-slate-50 px-4 py-10 sm:px-6 lg:px-10">
@@ -349,7 +213,64 @@ const MasterCommandCenter = () => {
             </button> */}
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Toolbar */}
+          <div className="flex flex-col gap-3 border-b border-slate-200 bg-white px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Search */}
+            <div className="relative w-full sm:w-80">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by name, email, GST..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput('')}
+                  className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Sort */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Sort by</span>
+
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value)
+                  setPage(1)
+                }}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              >
+                {sortOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                onClick={() => {
+                  setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+                  setPage(1)
+                }}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
+              >
+                {sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className={`overflow-x-auto transition-opacity duration-150 ${loading && operators.length > 0 ? 'pointer-events-none opacity-50' : ''}`}>
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -363,7 +284,7 @@ const MasterCommandCenter = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {loading ? (
+                {loading && operators.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-400">
                       Loading operators...
@@ -412,6 +333,55 @@ const MasterCommandCenter = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-500">
+              Showing <span className="font-semibold text-slate-700">{showingFrom}–{showingTo}</span> of{' '}
+              <span className="font-semibold text-slate-700">{totalOperators}</span> operators
+            </p>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={page === 1}
+                onClick={() => setPage((prev) => prev - 1)}
+                className="flex h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Prev
+              </button>
+
+              {getPageNumbers(page, totalPages).map((p, i) =>
+                p === '...' ? (
+                  <span key={`dots-${i}`} className="px-1 text-xs text-slate-400">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPage(p)}
+                    className={`h-9 min-w-9 rounded-lg px-3 text-xs font-semibold transition ${
+                      p === page
+                        ? 'bg-blue-950 text-white shadow-sm'
+                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() => setPage((prev) => prev + 1)}
+                className="flex h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -421,6 +391,8 @@ const MasterCommandCenter = () => {
           onClose={() => setSelectedOperator(null)}
           onStatusChange={handleStatusChange}
           updating={updatingStatus}
+          onBlockToggle={handleBlockToggle}
+          blocking={blocking}
         />
       )}
     </section>

@@ -9,7 +9,7 @@ interface SidebarLinkItem {
 }
 
 const sidebarLinks: SidebarLinkItem[] = [
-  { label: "Home", href: "/operator", icon: Home },
+  { label: "Home", href: "/operator/home", icon: Home },
   { label: "Route Management", href: "/operator/routes", icon: Route },
   { label: "Bookings", href: "/operator/bookings", icon: CalendarCheck },
   { label: "Fleet Management", href: "/operator/fleet", icon: Bus },
@@ -35,7 +35,7 @@ const OperatorSidebar = () => {
           <NavLink
             key={link.label}
             to={link.href}
-            end={link.href === "/operator"}
+            end={link.href === "/operator/home"}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-lg border-l-4 px-3 py-2.5 text-sm font-medium transition ${
                 isActive

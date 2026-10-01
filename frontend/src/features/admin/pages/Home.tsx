@@ -3,56 +3,32 @@ import {
   Users,
   Ticket,
   IndianRupee,
-  Clock,
-} from "lucide-react";
+ } from "lucide-react";
 
 const stats = [
   {
     title: "Operators",
-    value: "28",
+    value: "Comming Soon",
     icon: Bus,
     color: "bg-blue-100 text-blue-600",
   },
   {
     title: "Users",
-    value: "1,245",
+    value: "Comming Soon",
     icon: Users,
     color: "bg-green-100 text-green-600",
   },
   {
     title: "Bookings",
-    value: "326",
+    value: "Comming Soon",
     icon: Ticket,
     color: "bg-yellow-100 text-yellow-600",
   },
   {
     title: "Revenue",
-    value: "₹52,430",
+    value: "Comming Soon",
     icon: IndianRupee,
     color: "bg-purple-100 text-purple-600",
-  },
-];
-
-const recentOperators = [
-  {
-    company: "ABC Travels",
-    owner: "Rahul",
-    status: "Pending",
-  },
-  {
-    company: "Skyline Bus",
-    owner: "Arun",
-    status: "Approved",
-  },
-  {
-    company: "Metro Travels",
-    owner: "John",
-    status: "Pending",
-  },
-  {
-    company: "Royal Express",
-    owner: "Akash",
-    status: "Approved",
   },
 ];
 
@@ -106,60 +82,6 @@ const AdminDashboard = () => {
 
       Comming Soon 
 
-      {/* Pending Operators */}
-
-      {/* <div className="rounded-xl border bg-white p-5 shadow-sm">
-        <div className="mb-5 flex items-center gap-2">
-          <Clock className="text-amber-500" size={20} />
-
-          <h2 className="text-lg font-semibold">
-            Recent Operator Registrations
-          </h2>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b text-left text-sm text-gray-500">
-                <th className="pb-3">Company</th>
-                <th className="pb-3">Owner</th>
-                <th className="pb-3">Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {recentOperators.map((operator) => (
-                <tr
-                  key={operator.company}
-                  className="border-b last:border-none"
-                >
-                  <td className="py-4 font-medium">
-                    {operator.company}
-                  </td>
-
-                  <td>{operator.owner}</td>
-
-                  <td>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        operator.status === "Approved"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {operator.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <button className="mt-5 rounded-lg bg-[#0B1437] px-5 py-2 text-sm font-medium text-white hover:bg-[#16245d]">
-          View All Operators
-        </button>
-      </div> */}
     </div>
   );
 };

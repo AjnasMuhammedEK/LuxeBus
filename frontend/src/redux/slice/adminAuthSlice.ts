@@ -1,16 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
- 
+import type { IUser } from "@/types/user.types";
 
 interface AdminState {
-  admin: any | null;
+  admin: IUser | null;
   accessToken: string | null;
   isAuthenticated: boolean;
 }
 
 
 interface AdminLoginPayload {
-  admin: any;
+  admin: IUser;
   accessToken: string;
 }
 

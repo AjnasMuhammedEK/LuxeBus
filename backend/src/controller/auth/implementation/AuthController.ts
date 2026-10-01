@@ -1,8 +1,10 @@
-import e, { Request , Response , NextFunction } from "express";
+import { Request , Response , NextFunction } from "express";
 import { IAuthController } from "../interfaces/IAuthController";
 import { IAuthService } from "../../../services/auth/interface/IAuthService";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../DI/types";
+import { HttpStatus } from "../../../constants/httpStatusCodes";
+import { createResponse } from "../../../helper/responseHelper";
  
 @injectable()
 export class AuthController implements IAuthController {
@@ -14,14 +16,26 @@ export class AuthController implements IAuthController {
             
             const {name , email , phone , password} = req.body
 
-            const response = await this.authService.userRegister({
+            await this.authService.userRegister({
                 name , 
                 email,
                 phone , 
                 password
             })
 
-            res.status(201).json(response)
+ 
+      
+
+            res.status(HttpStatus.CREATED).json(
+                createResponse(
+                    true,
+                    'User Register Successfully',
+                    null                    
+                )
+
+            )
+
+
         } catch (error) {
             console.log('ERROR in AuthCOntroller user Resgitser :',error)    
             next(error);        
@@ -39,16 +53,21 @@ export class AuthController implements IAuthController {
                 httpOnly:true,
                 secure:false,
                 sameSite:'strict',
-                maxAge:24*60*60*1000
+                maxAge:5 * 60 * 1000
             })
             
             console.log(response);
-            res.status(200).json({
-                success:response.success,
-                message : response.message,
-                user:response.user,
-                accessToken : response.accessToken
-            })
+
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true , 'User Login Successfully' ,
+                    {
+                        user : response.user ,
+                         accessToken : response.accessToken
+                    }
+                )
+            )
+          
             
         } catch (error) {
             console.log('ERROR in AuthCOntroller user Login :',error) 
@@ -65,10 +84,15 @@ export class AuthController implements IAuthController {
                 
             })
 
-            res.status(200).json({
-                success:true,
-                message :'User Logout SuccessFully'
-            })
+         
+
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    'User Logout SuccessFully',
+                    null
+                )
+            )
         } catch (error) {
             console.log('Error In UserLogout' , error)
             next(error)
@@ -87,10 +111,15 @@ export class AuthController implements IAuthController {
                 files
             );
 
-            res.status(201).json({
-                success: true,
-                message: "Operator registration submitted successfully",
-            });
+          
+
+            res.status(HttpStatus.CREATED).json(
+                createResponse(
+                    true,
+                    'Operator registration submitted successfully',
+                    null
+                )
+            )
         } catch (error) {
             next(error);
         }
@@ -107,14 +136,19 @@ export class AuthController implements IAuthController {
                 httpOnly:true,
                 secure:false,
                 sameSite:'strict',
-                maxAge:24*60*60*1000
+                maxAge:5 * 60 * 1000
             })
-            res.status(200).json({
-                success:true,
-                message:response.message,
-                operator:response.operator,
-                accessToken:response.accessToken
-            })
+     
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    'Operator Login SuccessFully',
+                    {
+                        operator : response.operator,
+                        accessToken : response.accessToken
+                    }
+                )
+            )
             
         } catch (error) {
             console.log('ERROR in AuthCOntroller operator Login :',error) 
@@ -135,10 +169,15 @@ export class AuthController implements IAuthController {
 
             // console.log('Called 2222222222222222222222 The ---------============')
 
-            res.status(200).json({
-                success:true,
-                message:'Operator Logout SuccessFully'
-            })            
+        
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    'Operator Logout SuccessFully',
+                    null
+                )
+            )
+
         } catch (error) {
             console.log('Error In operatorLogout ' , error)
             next(error)          
@@ -156,14 +195,20 @@ export class AuthController implements IAuthController {
                 httpOnly:true,
                 secure:false,
                 sameSite:'strict',
-                maxAge:24*60*60*1000
+                maxAge:5 * 60 * 1000
             })
-            res.status(200).json({
-                success:true,
-                message : response.message,
-                admin : response.admin,
-                accessToken : response.accessToken
-            })
+       
+
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    'Admin Login SuccessFully',
+                    {
+                        admin : response.admin,
+                        accessToken : response.accessToken
+                    }
+                )
+            )
             
         } catch (error) {
             console.log('ERROR in AuthCOntroller Admin Login :',error) 
@@ -180,10 +225,16 @@ export class AuthController implements IAuthController {
                 sameSite:'strict'
             })   
             
-            res.status(200).json({
-                success:true,
-                message : 'Admin logout successfully'
-            })
+        
+
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    'Admin Logout SuccessFully',
+                    null
+                )
+            )
+
         } catch (error) {
             console.log('Error In admin Logout' , error)
             next(error)
@@ -197,7 +248,14 @@ export class AuthController implements IAuthController {
 
 
             const response = await this.authService.userForgotPasswordEmailVerify({email})
-            res.status(200).json(response)
+            
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    response.success,
+                    response.message,
+                    null
+                )
+            )
         } catch (error) {
             console.log('ERROR in AuthCOntroller userForgottPasswordEmailVerify :',error) 
             next(error)       
@@ -210,7 +268,14 @@ export class AuthController implements IAuthController {
             console.log('emai ===',email , otp)
             const response = await this.authService.userVerifyForgotPasswordOtp({email,otp})
             console.log('Response from Auth controller')
-            res.status(200).json(response)
+     
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    response.success,
+                    response.message,
+                    null
+                )
+            )
         } catch (error) {
             console.log('ERROR in AuthCOntroller userVerifyForgotPasswordOtp :',error) 
             next(error)         
@@ -221,7 +286,15 @@ export class AuthController implements IAuthController {
         try {
             const {email , password} = req.body
             const response = await this.authService.userResetPassword({email,password})
-            res.status(201).json(response)
+
+            res.status(HttpStatus.CREATED).json(
+                createResponse(
+                    response.success,
+                    response.message,
+                    null
+                )
+            )
+           
         } catch (error) {
             console.log('ERROR in AuthCOntroller userResetPassword :',error) 
             next(error)               
@@ -235,7 +308,26 @@ export class AuthController implements IAuthController {
                 credential
             })
 
-            res.status(200).json(response)
+   
+
+
+            res.cookie('refresh_token_user' , response.refreshToken , {
+                httpOnly:true,
+                secure:false,
+                sameSite:'strict',
+                maxAge:24*60*60*1000
+            })
+
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    'Login Successfully',
+                    {
+                        user : response.user,
+                        accessToken : response.accessToken
+                    }
+                )
+            )
         } catch (error) {
             next(error);
         }
@@ -247,12 +339,14 @@ export class AuthController implements IAuthController {
             
             const refreshToken = req.cookies?.refresh_token_user
 
-            if(!refreshToken){
-                res.status(401).json({
-                    success:false,
-                    message : 'Refresh Token is not found'
-                })
-
+            if (!refreshToken) {
+                res.status(HttpStatus.UNAUTHORIZED).json(
+                    createResponse(
+                        false,
+                        'Refresh Token is not found',
+                        null
+                    )
+                )
                 return
             }
 
@@ -260,11 +354,17 @@ export class AuthController implements IAuthController {
                 refreshToken
             )
 
-            res.status(200).json({
-                success:true,
-                accessToken : response.accessToken
+    
 
-            })
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    '',
+                    {
+                        accessToken : response.accessToken
+                    }
+                )
+            )
         } catch (error) {
             console.log("ERROR in AuthController refreshUserToken:",error);
             next(error);
@@ -277,21 +377,28 @@ export class AuthController implements IAuthController {
         try {
             const refreshToken = req.cookies?.refresh_token_admin
 
-            if(!refreshToken){
-                res.status(401).json({
-                    success:false,
-                    message : 'RefreshToken Not Found'
-                })
-
+            if (!refreshToken) {
+                res.status(HttpStatus.UNAUTHORIZED).json(
+                    createResponse(
+                        false,
+                        'Refresh Token is not found',
+                        null
+                    )
+                )
                 return
             }
 
             const response = await this.authService.adminRefreshToken(refreshToken)
 
-            res.status(200).json({
-                success:true, 
-                accessToken : response.accessToken
-            })            
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    '',
+                    {
+                        accessToken : response.accessToken
+                    }
+                )
+            )          
         } catch (error) {
             console.log("ERROR in AuthController adminRefreshToken:",error);
             next(error);
@@ -304,21 +411,28 @@ export class AuthController implements IAuthController {
             
             const refreshTokne = req.cookies?.refresh_Token_Operator
 
-            if(!refreshTokne){
-                res.status(401).json({
-                    success:false,
-                    message : 'Refresh TOken Not Found'
-                })
-
+            if (!refreshTokne) {
+                res.status(HttpStatus.UNAUTHORIZED).json(
+                    createResponse(
+                        false,
+                        'Refresh Token is not found',
+                        null
+                    )
+                )
                 return
             }
 
             const response = await this.authService.operatorRefreshToken(refreshTokne)
 
-            res.status(200).json({
-                successs:true, 
-                accessToken: response.accessToken
-            })
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    '',
+                    {
+                        accessToken : response.accessToken
+                    }
+                )
+            )
 
         } catch (error) {
             console.log("ERROR in AuthController operatorRefreshToken:",error);

@@ -1,12 +1,19 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store/store";
 import { Clock, Building2, User, Mail, Phone, BadgeCheck } from "lucide-react";
+import { Navigate } from "react-router-dom";
 import logo from "../../../../public/logo.png";
 import OperatorNavbar from "@/components/layouts/operator/OperatorNavbar";
 const OperatorStatusSection = () => {
-  const operator = useSelector(
-    (state: RootState) => state.operatorAuth.operator
-  );
+ 
+
+      const operator = useSelector(
+        (state: RootState) => state.operatorAuth.operator
+    );
+
+    if (!operator) {
+        return <Navigate to="/operator/login" replace />;
+    }
 
   return (
     <>

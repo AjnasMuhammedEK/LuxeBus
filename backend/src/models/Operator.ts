@@ -74,6 +74,12 @@ const operatorSchema = new Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+
+    isBlocked : {
+      type : Boolean,
+      default : false,
+      required: true
+    }    
   },
   {
     timestamps: true,

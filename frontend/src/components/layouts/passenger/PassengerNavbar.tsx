@@ -6,7 +6,7 @@ import logo from "../../../../public/logo.png";
 import { logout } from "@/redux/slice/authSlice";
 import { userLogout } from "@/features/auth/services/authService";
 import type { RootState } from "@/redux/store/store";
-
+import toast from 'react-hot-toast'
 
 interface NavLinkItem {
   label: string;
@@ -28,7 +28,8 @@ const PassengerNavbar = () => {
     try {
       
       await userLogout()
-
+      
+      toast.success('Logged out successfully') 
       dispatch(logout())
     } catch (error) {
       console.log("User Logout failed:", error);

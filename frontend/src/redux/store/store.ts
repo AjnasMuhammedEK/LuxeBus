@@ -2,6 +2,7 @@ import { configureStore , combineReducers } from '@reduxjs/toolkit'
 import authReducer from '../slice/authSlice'
 import operatorAuthReducer from '../slice/operatorAuthSlice'
 import adminAuthReducer from "../slice/adminAuthSlice";
+import staffAuthReducer from "../slice/staffAuthSlice";
 import storageModule from "redux-persist/lib/storage";
 import {persistReducer , persistStore} from "redux-persist"
 
@@ -19,7 +20,8 @@ const persistConfig = {
 const rootReducer = combineReducers ({
   auth : authReducer,
   operatorAuth : operatorAuthReducer,
-  adminAuth : adminAuthReducer
+  adminAuth : adminAuthReducer,
+  staffAuth : staffAuthReducer
 })
 
 const persistedReducer = persistReducer (persistConfig , rootReducer)

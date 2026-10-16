@@ -1,3 +1,4 @@
+
 export const TYPES = {
   UserAuthRepository: Symbol.for("UserAuthRepository"),
   OperatorAuthRepository: Symbol.for("OperatorAuthRepository"),
@@ -10,5 +11,6 @@ export const TYPES = {
   EmailService:Symbol.for('EmailService'),
   StaffRepository:Symbol.for('StaffRepository'),
   StaffService: Symbol.for('StaffService'),
-  StaffController: Symbol.for('StaffController')
+  StaffController: Symbol.for('StaffController'),
+  
 };

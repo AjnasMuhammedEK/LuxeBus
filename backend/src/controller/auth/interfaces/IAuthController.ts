@@ -13,9 +13,14 @@ export interface IAuthController {
     adminRefreshToken(req: Request,res: Response,next: NextFunction): Promise<void>;
     operatorRefreshToken(req: Request,res: Response,next: NextFunction): Promise<void>;
     userRefreshToken(req: Request,res: Response,next: NextFunction): Promise<void>;
+    staffRefreshToken(req: Request,res: Response,next: NextFunction): Promise<void>;
     userLogout(req: Request,res: Response,next: NextFunction): Promise<void>;
     operatorLogout(req: Request,res: Response,next: NextFunction): Promise<void>;
     adminLogout (req: Request,res: Response,next: NextFunction): Promise<void>;
+
+    staffLogin(req:Request , res : Response , next : NextFunction) : Promise<void>
+    staffLogout (req: Request,res: Response,next: NextFunction): Promise<void>;
+
 }
 
  

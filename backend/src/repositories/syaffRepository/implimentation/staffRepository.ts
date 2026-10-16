@@ -90,4 +90,8 @@ export class StaffRepository extends BaseRepositary<IStaff> implements IStaffRep
             }
         );
     }
+
+    async findStaffById(staffId: string): Promise<StaffDocument | null> {
+        return await this.findById(staffId);
+    }
 }

@@ -2,7 +2,7 @@
 import { publicApi } from '@/services/publicAoi'
 
 import { AUTH_BASE_ROUTE } from '@/constants/apiRoutes'
-import type { UserRegisterFormData , UserLoginFormData, OperatorLoginFormData , userForgotPasswordEmailVeryfication ,UserVerifyForgotPasswordOtp, UserResetPassword } from '@/types/auth.types'
+import type { UserRegisterFormData , UserLoginFormData, OperatorLoginFormData , userForgotPasswordEmailVeryfication ,UserVerifyForgotPasswordOtp, UserResetPassword, StaffLoginFromData } from '@/types/auth.types'
 // import { passengerApi } from '@/services/api'
 // import { operatorApi } from '@/services/api'
 // import { adminAPi } from '@/services/api'
@@ -66,5 +66,17 @@ export const adminLogout = async () => {
 
 export const operatorLogout = async () => {
     const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/operatorLogout`)
+    return response.data
+}
+
+
+export const staffLogin = async (data : StaffLoginFromData) => {
+    const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/staffLogin`,data)
+    return response.data
+}
+
+
+export const staffLogout = async () => {
+    const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/staffLogout`)
     return response.data
 }

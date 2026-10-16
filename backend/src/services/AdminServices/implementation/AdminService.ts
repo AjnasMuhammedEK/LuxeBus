@@ -9,16 +9,16 @@ export class AdminService implements IAdminService {
 
     constructor(
         @inject(TYPES.AdminRepository)
-        private adminRepository: IAdminRepository,
+        private _adminRepository: IAdminRepository,
 
         @inject(TYPES.S3StorageService)
-        private storageService:IStorageService
+        private _storageService:IStorageService
 
     ) {}
 
     async getOperators(page: number,limit: number,search: string,sortBy: string,sortOrder: string)  {
  
-        const result = await this.adminRepository.getOperators(
+        const result = await this._adminRepository.getOperators(
             page,
             limit,
             search,
@@ -41,9 +41,22 @@ export class AdminService implements IAdminService {
         };
     }
 
-    async updateOperatorStatus(operatorId: string,status: string): Promise<IOperator> {
+    async updateOperatorStatus(operatorId: string,status: string , reason : string | null): Promise<IOperator> {
 
-        const operator =await this.adminRepository.updateOperatorStatus(operatorId,status);
+
+        const existOperator = await this._adminRepository.findOperatorById(operatorId)
+
+        if(!existOperator){
+            throw new Error('Operator not found')
+        }
+
+        if(existOperator.status === 'rejected'){
+            throw new Error('Rejected operators cannot be changed')
+        }
+
+        const operator = await this._adminRepository.updateOperatorStatus(operatorId,status , reason);
+
+ 
 
         if (!operator) {
             throw new Error("Operator notFound");
@@ -53,11 +66,11 @@ export class AdminService implements IAdminService {
     }
 
     async getDocumentSignedUrl(objectKey: string): Promise<string> {
-        return await this.storageService.getSignedUrl(objectKey)
+        return await this._storageService.getSignedUrl(objectKey)
     }
 
     async updateOperatorBlock(operatorId: string, isBlocked: boolean): Promise<IOperator> {
-        const operator = await this.adminRepository.updateOperatorBlock(operatorId,isBlocked)
+        const operator = await this._adminRepository.updateOperatorBlock(operatorId,isBlocked)
 
         if(!operator){
             throw new Error('Operator not Found')

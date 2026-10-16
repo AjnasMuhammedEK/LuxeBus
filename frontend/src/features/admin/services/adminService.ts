@@ -15,8 +15,8 @@ export const getOperators = async ( params :{
     return response.data;
 };
 
-export const updateOperatorStatus = async ( operatorId: string,status: string) => {
-    const response = await adminApi.patch(`/${ADMIN_BASE_ROUTE}/updateOperatorStatus/${operatorId}`,{status});
+export const updateOperatorStatus = async ( operatorId: string,status: string , reason : string | null) => {
+    const response = await adminApi.patch(`/${ADMIN_BASE_ROUTE}/updateOperatorStatus/${operatorId}`,{status,reason});
     return response.data;
 };
 

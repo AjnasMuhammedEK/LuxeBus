@@ -75,6 +75,11 @@ const operatorSchema = new Schema(
       default: "pending",
     },
 
+    rejectReason: {
+      type: String,
+      default: null,
+    },
+
     isBlocked : {
       type : Boolean,
       default : false,

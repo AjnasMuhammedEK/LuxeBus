@@ -56,13 +56,17 @@ export class AdminRepository implements IAdminRepository {
         };
     }
 
-    async updateOperatorStatus(operatorId: string,status: string): Promise<IOperator | null> {
+    async updateOperatorStatus(operatorId: string,status: string , reason : string | null): Promise<IOperator | null> {
 
-        return await this.operatorRepository.updateById(operatorId,{ status });
+        return await this.operatorRepository.updateById(operatorId,{ status , rejectReason : reason ?? null });
     }
 
     async updateOperatorBlock(operatorId: string,isBlocked: boolean): Promise<IOperator | null> {
 
         return await this.operatorRepository.updateById(operatorId,{ isBlocked });
+    }
+
+    async findOperatorById(operatorId: string): Promise<IOperator | null> {
+        return await this.operatorRepository.findById(operatorId)
     }
 }

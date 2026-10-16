@@ -6,13 +6,13 @@ dotenv.config()
 
 export class EmailService implements IEmailService {
 
-    private transporter : Transporter
-    private fromEmail :string
+    private _transporter : Transporter
+    private _fromEmail :string
 
     constructor(){
-        this.fromEmail = process.env.NODEMAILER_EMAIL as string
+        this._fromEmail = process.env.NODEMAILER_EMAIL as string
 
-        this.transporter = nodemailer.createTransport({
+        this._transporter = nodemailer.createTransport({
             service:'gmail',
             auth:{
                 user:process.env.NODEMAILER_EMAIL,
@@ -23,7 +23,7 @@ export class EmailService implements IEmailService {
 
     async sendOtpEmail(email: string, otp: string): Promise<void> {
         const mailOptions = {
-            from: this.fromEmail,
+            from: this._fromEmail,
             to: email,
             subject: "LuxeBus - Email Verification OTP",
             html: `
@@ -68,7 +68,7 @@ export class EmailService implements IEmailService {
         };
 
         try {
-            await this.transporter.sendMail(mailOptions);
+            await this._transporter.sendMail(mailOptions);
             console.log(`OTP sent successfully to ${email}`);
         } catch (error) {
             console.error("Error while sending OTP email:", error);

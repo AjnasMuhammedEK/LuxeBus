@@ -26,4 +26,13 @@ export interface IOperator {
     | "rejected"
     | "suspended";
 
+    rejectReason: string | null
+
+    yearOfIncorporation: string
+    authorisedRepresentative: string
+    registrationCertificate: string
+    taxCertificate: string
+    transportLicense: string
+    createdAt: string
+
 }

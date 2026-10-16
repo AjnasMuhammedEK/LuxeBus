@@ -11,7 +11,7 @@ export const generateAccessToken = (id : string , role : string) : string => {
   return jwt.sign (
     {id , role},
     process.env.JWT_SECRET!,
-    {expiresIn : '1m'}
+    {expiresIn : '15m'}
   )
 }
 
@@ -20,7 +20,7 @@ export const generateRefreshToken = (id : string , role : string) : string  => {
   return jwt.sign(
     {id , role},
     process.env.REFRESH_JWT_SECRET!,
-    {expiresIn : '5m'}
+    {expiresIn : '30m'}
   )
 }
 

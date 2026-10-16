@@ -26,5 +26,8 @@ router.post('/operator-refresh-token',authController.operatorRefreshToken)
 router.post('/userLogout',authController.userLogout)
 router.post('/adminLogout',authController.adminLogout)
 router.post('/operatorLogout',authController.operatorLogout)
+router.post('/staffLogin',authController.staffLogin)
+router.post('/staffLogout',authController.staffLogout)
+router.post('/staff-refresh-token',authController.staffRefreshToken)
 
 export default router;

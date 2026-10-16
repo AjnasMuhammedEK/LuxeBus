@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Bus, Users, Ticket, Wallet, TrendingUp, ArrowUpRight, Search, X, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getOperators, updateOperatorStatus, updateOperatorBlockStatus } from '@/features/admin/services/adminService'
-import OperatorDetailsModal, {
-  StatusBadge,
-  type Operator,
-} from '@/features/admin/components/OperatorDetailsModal'
+import OperatorDetailsModal, {StatusBadge} from '@/features/admin/components/OperatorDetailsModal'
+import type { IOperator } from '@/types/operator.types'
 
 interface StatCardData {
   label: string
@@ -28,10 +26,10 @@ const getPageNumbers = (current: number, total: number): (number | '...')[] => {
 }
 
 const MasterCommandCenter = () => {
-  const [operators, setOperators] = useState<Operator[]>([])
+  const [operators, setOperators] = useState<IOperator[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null)
+  const [selectedOperator, setSelectedOperator] = useState<IOperator | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState(false)
   const [blocking, setBlocking] = useState(false)
 
@@ -127,15 +125,23 @@ const MasterCommandCenter = () => {
   { label: 'Total Bookings', value: 'comming soon', delta: '852 Pending', icon: Ticket },
 ]
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (id: string,status: IOperator["status"],reason: string | null) => {
     try {
       setUpdatingStatus(true)
-      await updateOperatorStatus(id, status)
+
+      await updateOperatorStatus(id, status, reason)
 
       setOperators((prev) =>
-        prev.map((op) => (op._id === id ? { ...op, status } : op))
+        prev.map((op) =>
+          op._id === id ? { ...op, status } : op
+        )
       )
-      setSelectedOperator((prev) => (prev && prev._id === id ? { ...prev, status } : prev))
+
+      setSelectedOperator((prev) =>
+        prev && prev._id === id
+          ? { ...prev, status }
+          : prev
+      )
     } catch (err) {
       console.error(err)
     } finally {

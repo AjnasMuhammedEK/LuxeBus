@@ -30,6 +30,7 @@ import {
 import toast from 'react-hot-toast'
 import { operatorRegister } from '../../services/authService'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
 const documentSlots: {
   key: OperatorDocumentKey
@@ -157,6 +158,13 @@ const OperatorRegisterSection = () => {
       }, 2000)
     } catch (error) {
       console.log(error);
+      if (axios.isAxiosError(error)) {
+          toast.error(
+              error.response?.data?.message || "Something went wrong"
+          );
+      } else {
+          toast.error("Something went wrong");
+      }
     } finally {
       setIsLoading(false)
     }

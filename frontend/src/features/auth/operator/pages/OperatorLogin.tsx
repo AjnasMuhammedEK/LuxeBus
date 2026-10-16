@@ -12,6 +12,7 @@ import {
   getValidationErrors,
 } from '@/features/auth/operator/validation/operatorAuthValidation'
 import axios from 'axios'
+ 
 
 type FormErrors = Partial<Record<keyof OperatorLoginFormData, string>>
 
@@ -27,6 +28,8 @@ const OperatorLoginSection = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
+
+ 
 
   const [formData, setFormData] = useState<OperatorLoginFormData>({
     email: '',
@@ -64,6 +67,8 @@ const OperatorLoginSection = () => {
     setIsSubmitting(true)
 
     try {
+
+       
       const response = await operatorLogin(result.data)
 
     dispatch(
@@ -75,23 +80,18 @@ const OperatorLoginSection = () => {
 
       toast.success(response.message)
 
-      console.log(response)
-
-      console.log('--------')
-      console.log(response.data.operator.status)
-
-
-      // if(response.data.operator.stat)
 
       switch (response.data.operator.status) {
         case "approved":
           navigate("/operator/home");
-          console.log('approved')
           break;
 
         case "rejected":
           navigate("/operator/status");
-          console.log('rejected')
+          break;
+
+        case "pending":
+          navigate("/operator/status");
           break;
 
         default:
@@ -99,10 +99,9 @@ const OperatorLoginSection = () => {
           localStorage.removeItem("token");
           navigate("/operator/login");
       }
-
-      console.log('----=========-----------=========---------')
-      
+ 
 } catch (error) {
+  
   const message = axios.isAxiosError(error)
     ? error.response?.data?.message ?? "Login failed"
     : "Login failed";

@@ -2,24 +2,9 @@ import { useState } from 'react'
 import {Bus,X,FileText,ExternalLink,Ban, ShieldCheck,AlertTriangle} from 'lucide-react'
 
 import { getSignedDocmunetUrl } from '@/features/admin/services/adminService'
+import toast from 'react-hot-toast'
+import type { IOperator } from '@/types/operator.types'
  
-export interface Operator {
-  _id: string
-  ownerName: string
-  legalEntityName: string
-  email: string
-  phone: string
-  gstNumber: string
-  yearOfIncorporation: string
-  panNumber: string
-  authorisedRepresentative: string
-  registrationCertificate: string
-  taxCertificate: string
-  transportLicense: string
-  status: string
-  isBlocked:boolean
-  createdAt: string
-}
 
 export interface StatCardData {
   label: string
@@ -62,8 +47,7 @@ export const StatusBadge = ({ status }: { status: string }) => (
 const handleDoumentView = async (objectKey : string) => {
   try {
     const response = await getSignedDocmunetUrl(objectKey)
-    console.log('Resposen signed url --------',response)
-     
+      
     window.open(response.data.signedUrl,'_blank')
   } catch (error) {
     console.log(error);
@@ -172,9 +156,9 @@ const ConfirmDialog = ({
 
 
 interface OperatorModalProps {
-  operator: Operator
+  operator: IOperator
   onClose: () => void
-  onStatusChange: (id: string, status: string) => void
+  onStatusChange: (id: string, status: IOperator["status"] , reason : string | null) => void
   updating: boolean
   onBlockToggle: (id: string, isBlocked: boolean) => void
   blocking: boolean
@@ -182,8 +166,35 @@ interface OperatorModalProps {
 
 const OperatorDetailsModal = ({ operator, onClose, onStatusChange, updating, onBlockToggle, blocking }: OperatorModalProps) => {
   const [status, setStatus] = useState(operator.status)
- 
+  const [rejectReason, setRejectReason] = useState(operator.rejectReason ?? '')
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const isRejected = operator.status?.toLowerCase() === 'rejected'
+
+  const handleUpdateStatus = () => {
+
+
+    if (isRejected) {
+      toast.error('A rejected operator cannot be changed to approved or pending')
+      return
+    }
+
+
+    if (status === 'rejected' && !rejectReason.trim()) {
+      toast.error('Please enter a rejection reason before rejecting this operator')
+      return
+    }
+
+    if (status === 'rejected' && rejectReason.trim().length < 10) {
+      toast.error('Rejection reason must be at least 10 characters')
+      return
+    }
+
+    onStatusChange(
+      operator._id,
+      status,
+      status === 'rejected' ? rejectReason.trim() : null
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-8">
@@ -214,25 +225,60 @@ const OperatorDetailsModal = ({ operator, onClose, onStatusChange, updating, onB
 
               <select
                 value={status}
-                disabled={updating}
-                onChange={(e) => setStatus(e.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
+                disabled={updating || isRejected}
+                onChange={(e) => setStatus(e.target.value  as IOperator["status"])}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
               </select>
 
+
+
               <button
-                onClick={() => onStatusChange(operator._id, status)}
-                disabled={updating || status === operator.status}
-                className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50"
+                type="button"
+                onClick={handleUpdateStatus}
+                disabled={updating || isRejected || status === operator.status}
+                className="inline-flex items-center justify-center rounded-lg bg-blue-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {updating ? 'Updating...' : 'Update Status'}
               </button>
 
-              {updating && <span className="text-xs text-slate-400">Updating...</span>}
+              
             </div>
+
+            {isRejected && (
+              <p className="flex items-center gap-1.5 text-xs font-medium text-red-600">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                This application was rejected and its status can no longer be changed.
+              </p>
+            )}
+            
+            {status === 'rejected' && (
+              <div className="w-full basis-full rounded-xl border border-red-200 bg-red-50/50 p-4">
+                <label
+                  htmlFor="reject-reason"
+                  className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-800"
+                >
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  Rejection Reason
+                  <span className="text-red-500">*</span>
+                </label>
+
+                <textarea
+                  id="reject-reason"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Enter the reason for rejecting this operator..."
+                  rows={4}
+                  disabled={updating || isRejected}
+                  className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+                />
+
+              
+              </div>
+            )}
           </div>
 
 
@@ -255,7 +301,7 @@ const OperatorDetailsModal = ({ operator, onClose, onStatusChange, updating, onB
 
               <button
                 type="button"
-                disabled={blocking}
+                disabled={blocking || operator.status === 'pending' || operator.status === 'rejected'}
                 onClick={() => setConfirmOpen(true)}
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${
                   operator.isBlocked ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-red-600 hover:bg-red-500'

@@ -1,5 +1,6 @@
 import { IUserMappedData } from "../../../types/user";
 import { IOperatorMappedData } from "../../../types/operator";
+import { IStaffMappedData } from "../../../types/staff";
 
 export interface IAuthService {
   userRegister(data:{name: string,email: string,phone: string,password: string}): Promise<void>;
@@ -17,5 +18,7 @@ export interface IAuthService {
   userRefreshToken(refrehToken : string ):Promise<{accessToken:string}>
   adminRefreshToken(refreshToken : string):Promise<{accessToken : string}>
   operatorRefreshToken(refreshToken : string):Promise<{accessToken : string}>
+  staffRefreshToken(refreshToken : string):Promise<{accessToken : string}>
+  staffLogin (data:{email :string , password : string}) : Promise<{staff: IStaffMappedData;accessToken: string; refreshToken:string}>
 
  }

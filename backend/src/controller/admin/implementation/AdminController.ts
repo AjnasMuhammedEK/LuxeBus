@@ -12,25 +12,19 @@ export class AdminController implements IAdminController {
 
     constructor(
         @inject(TYPES.AdminService)
-        private adminService: IAdminService
+        private _adminService: IAdminService
     ) {}
 
     getOperators = async (req: Request,res: Response,next: NextFunction): Promise<void> => {
 
         try {
 
-
             const page = Number(req.query.page) || 1;
-            const limit = Number(req.query.limit) || 10;
-
- 
+            const limit = Number(req.query.limit) || 10; 
             const search = (req.query.search as string) || "";
-
             const sortBy = (req.query.sortBy as string) || "createdAt";
-
             const sortOrder = (req.query.sortOrder as string) || "desc";
-
-            const response = await this.adminService.getOperators(
+            const response = await this._adminService.getOperators(
                 page,
                 limit,
                 search,
@@ -45,7 +39,6 @@ export class AdminController implements IAdminController {
                     response
                 )
             );
-
             
         } catch (error) {
 
@@ -59,11 +52,12 @@ export class AdminController implements IAdminController {
         try {
 
             const operatorId = req.params.operatorId as string;
-            const { status } = req.body;
+            const { status , reason} = req.body;
 
-            const operator = await this.adminService.updateOperatorStatus(
+            const operator = await this._adminService.updateOperatorStatus(
                 operatorId,
-                status
+                status,
+                reason
             );
 
             res.status(HttpStatus.OK).json(
@@ -89,7 +83,7 @@ export class AdminController implements IAdminController {
             if(!objectKey){
                 throw new Error('Object key is Missing')
             }
-            const signedUrl = await this.adminService.getDocumentSignedUrl(objectKey as string)
+            const signedUrl = await this._adminService.getDocumentSignedUrl(objectKey as string)
             // console.log('Backend signer url' , signedUrl)
 
             res.status(HttpStatus.OK).json(
@@ -116,7 +110,7 @@ export class AdminController implements IAdminController {
 
             const {isBlocked} = req.body
 
-            const operator = await this.adminService.updateOperatorBlock(operatorId,isBlocked)
+            const operator = await this._adminService.updateOperatorBlock(operatorId,isBlocked)
 
             res.status(HttpStatus.OK).json(
                 createResponse(

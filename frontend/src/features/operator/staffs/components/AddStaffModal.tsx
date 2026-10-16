@@ -183,11 +183,10 @@ const AddStaffModal = ({ open, onClose, onCreated }: AddStaffModalProps) => {
       );
     }
 
-
-    console.log(data , 'From The Modal --------------')
+ 
 
    
-    const response = await staffRegister(data);
+    await staffRegister(data);
 
  
 

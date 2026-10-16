@@ -5,36 +5,34 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../../DI/types";
 import { HttpStatus } from "../../../constants/httpStatusCodes";
 import { createResponse } from "../../../helper/responseHelper";
+import { ResponseMessages } from "../../../constants/responseMessages";
  
 @injectable()
 export class AuthController implements IAuthController {
     
-    constructor(@inject(TYPES.AuthService) private authService:IAuthService){}
+    constructor(@inject(TYPES.AuthService) private _authService:IAuthService){}
 
     userReguister = async (req: Request, res: Response, next: NextFunction) => {
         try {
             
             const {name , email , phone , password} = req.body
 
-            await this.authService.userRegister({
+            await this._authService.userRegister({
                 name , 
                 email,
                 phone , 
                 password
             })
 
- 
-      
 
             res.status(HttpStatus.CREATED).json(
                 createResponse(
                     true,
-                    'User Register Successfully',
+                    ResponseMessages.USER_REGISTER_SUCCESS,
                     null                    
                 )
 
             )
-
 
         } catch (error) {
             console.log('ERROR in AuthCOntroller user Resgitser :',error)    
@@ -46,24 +44,24 @@ export class AuthController implements IAuthController {
         try {
             const {email , password} = req.body 
 
-            const response = await this.authService.userLogin({email , password})
-            
-            
+            const response = await this._authService.userLogin({email , password})
+                        
             res.cookie('refresh_token_user' , response.refreshToken , {
                 httpOnly:true,
                 secure:false,
                 sameSite:'strict',
-                maxAge:5 * 60 * 1000
+                maxAge:30 * 60 * 1000
             })
             
-            console.log(response);
+            // console.log(response);
 
             res.status(HttpStatus.OK).json(
                 createResponse(
-                    true , 'User Login Successfully' ,
+                    true ,
+                    ResponseMessages.USER_LOGIN_SUCCESS,
                     {
                         user : response.user ,
-                         accessToken : response.accessToken
+                        accessToken : response.accessToken
                     }
                 )
             )
@@ -84,12 +82,10 @@ export class AuthController implements IAuthController {
                 
             })
 
-         
-
             res.status(HttpStatus.OK).json(
                 createResponse(
                     true,
-                    'User Logout SuccessFully',
+                    ResponseMessages.USER_LOGOUT_SUCCESS,
                     null
                 )
             )
@@ -106,17 +102,15 @@ export class AuthController implements IAuthController {
                 [fieldname: string]: Express.Multer.File[];
             };
 
-            await this.authService.operatorRegister(
+            await this._authService.operatorRegister(
                 req.body,
                 files
             );
 
-          
-
             res.status(HttpStatus.CREATED).json(
                 createResponse(
                     true,
-                    'Operator registration submitted successfully',
+                    ResponseMessages.OPERATOR_REGISTER_SUCCESS,
                     null
                 )
             )
@@ -127,22 +121,22 @@ export class AuthController implements IAuthController {
     
     operatorLogin = async (req: Request, res: Response, next: NextFunction)=>{
         try {
-            // console.log('--------------')
+             
             const {email , password} = req.body
-            // console.log(req.body)
-            const response = await this.authService.operatorLogin({email,password})
+         
+            const response = await this._authService.operatorLogin({email,password})
 
             res.cookie('refresh_Token_Operator',response.refreshToken,{
                 httpOnly:true,
                 secure:false,
                 sameSite:'strict',
-                maxAge:5 * 60 * 1000
+                maxAge:30 * 60 * 1000
             })
      
             res.status(HttpStatus.OK).json(
                 createResponse(
                     true,
-                    'Operator Login SuccessFully',
+                    ResponseMessages.OPERATOR_LOGIN_SUCCESS,
                     {
                         operator : response.operator,
                         accessToken : response.accessToken
@@ -158,8 +152,6 @@ export class AuthController implements IAuthController {
 
     operatorLogout = async (req: Request, res: Response, next: NextFunction)=> {
         try {
-
-
             // console.log('Called The ---------============')
             res.clearCookie('refresh_Token_Operator',{
                 httpOnly:true,
@@ -168,12 +160,11 @@ export class AuthController implements IAuthController {
             })
 
             // console.log('Called 2222222222222222222222 The ---------============')
-
         
             res.status(HttpStatus.OK).json(
                 createResponse(
                     true,
-                    'Operator Logout SuccessFully',
+                    ResponseMessages.OPERATOR_LOGOUT_SUCCESS,
                     null
                 )
             )
@@ -188,21 +179,21 @@ export class AuthController implements IAuthController {
         try {
             const {email , password} = req.body 
 
-            const response = await this.authService.AdminLogin({email , password})
+            const response = await this._authService.AdminLogin({email , password})
             // console.log(response);
 
             res.cookie('refresh_token_admin',response.refreshToken,{
                 httpOnly:true,
                 secure:false,
                 sameSite:'strict',
-                maxAge:5 * 60 * 1000
+                maxAge:30 * 60 * 1000
             })
        
 
             res.status(HttpStatus.OK).json(
                 createResponse(
                     true,
-                    'Admin Login SuccessFully',
+                    ResponseMessages.ADMIN_LOGIN_SUCCESS,
                     {
                         admin : response.admin,
                         accessToken : response.accessToken
@@ -225,12 +216,10 @@ export class AuthController implements IAuthController {
                 sameSite:'strict'
             })   
             
-        
-
             res.status(HttpStatus.OK).json(
                 createResponse(
                     true,
-                    'Admin Logout SuccessFully',
+                    ResponseMessages.ADMIN_LOGOUT_SUCCESS,
                     null
                 )
             )
@@ -239,15 +228,14 @@ export class AuthController implements IAuthController {
             console.log('Error In admin Logout' , error)
             next(error)
         }
-
-        
     }
+
     userForgottPasswordEmailVerify = async(req: Request, res: Response, next: NextFunction)=>{
         try {
             const {email} = req.body
 
 
-            const response = await this.authService.userForgotPasswordEmailVerify({email})
+            const response = await this._authService.userForgotPasswordEmailVerify({email})
             
             res.status(HttpStatus.OK).json(
                 createResponse(
@@ -266,7 +254,7 @@ export class AuthController implements IAuthController {
         try {
             const {email , otp} = req.body
             console.log('emai ===',email , otp)
-            const response = await this.authService.userVerifyForgotPasswordOtp({email,otp})
+            const response = await this._authService.userVerifyForgotPasswordOtp({email,otp})
             console.log('Response from Auth controller')
      
             res.status(HttpStatus.OK).json(
@@ -285,7 +273,7 @@ export class AuthController implements IAuthController {
     userResetPassword = async  (req: Request, res: Response, next: NextFunction)=> {
         try {
             const {email , password} = req.body
-            const response = await this.authService.userResetPassword({email,password})
+            const response = await this._authService.userResetPassword({email,password})
 
             res.status(HttpStatus.CREATED).json(
                 createResponse(
@@ -304,24 +292,21 @@ export class AuthController implements IAuthController {
     googleLogin = async(req: Request, res: Response, next: NextFunction) => {
         try {
             const {credential } = req.body
-            const response = await this.authService.googleLogin({
+            const response = await this._authService.googleLogin({
                 credential
             })
-
-   
-
 
             res.cookie('refresh_token_user' , response.refreshToken , {
                 httpOnly:true,
                 secure:false,
                 sameSite:'strict',
-                maxAge:24*60*60*1000
+                maxAge:30 * 60 * 1000
             })
 
             res.status(HttpStatus.OK).json(
                 createResponse(
                     true,
-                    'Login Successfully',
+                    ResponseMessages.USER_LOGIN_SUCCESS,
                     {
                         user : response.user,
                         accessToken : response.accessToken
@@ -343,18 +328,16 @@ export class AuthController implements IAuthController {
                 res.status(HttpStatus.UNAUTHORIZED).json(
                     createResponse(
                         false,
-                        'Refresh Token is not found',
+                        ResponseMessages.REFRESH_TOKEN_NOT_FOUND,
                         null
                     )
                 )
                 return
             }
 
-            const response = await this.authService.userRefreshToken(
+            const response = await this._authService.userRefreshToken(
                 refreshToken
             )
-
-    
 
             res.status(HttpStatus.OK).json(
                 createResponse(
@@ -381,14 +364,14 @@ export class AuthController implements IAuthController {
                 res.status(HttpStatus.UNAUTHORIZED).json(
                     createResponse(
                         false,
-                        'Refresh Token is not found',
+                        ResponseMessages.REFRESH_TOKEN_NOT_FOUND,
                         null
                     )
                 )
                 return
             }
 
-            const response = await this.authService.adminRefreshToken(refreshToken)
+            const response = await this._authService.adminRefreshToken(refreshToken)
 
             res.status(HttpStatus.OK).json(
                 createResponse(
@@ -415,14 +398,14 @@ export class AuthController implements IAuthController {
                 res.status(HttpStatus.UNAUTHORIZED).json(
                     createResponse(
                         false,
-                        'Refresh Token is not found',
+                        ResponseMessages.REFRESH_TOKEN_NOT_FOUND,
                         null
                     )
                 )
                 return
             }
 
-            const response = await this.authService.operatorRefreshToken(refreshTokne)
+            const response = await this._authService.operatorRefreshToken(refreshTokne)
 
             res.status(HttpStatus.OK).json(
                 createResponse(
@@ -439,6 +422,91 @@ export class AuthController implements IAuthController {
             next(error);   
         }
     }
-  
+
+    staffRefreshToken = async(req: Request, res: Response, next: NextFunction) => {
+        try {
+            const refreshToken = req.cookies?.refresh_token_staff
+
+            if(!refreshToken){
+                res.status(HttpStatus.UNAUTHORIZED).json(
+                    createResponse(
+                        false,
+                        ResponseMessages.REFRESH_TOKEN_NOT_FOUND,
+                        null
+                    )
+                )
+                return
+            }
+
+            const response = await this._authService.staffRefreshToken(refreshToken)
+
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    '',
+                    {
+                        accessToken : response.accessToken
+                    }
+                )
+            )
+        } catch (error) {
+            console.log("ERROR in AuthController staffRefreshToken:",error);
+            next(error);        
+        }
+    }
+
+    staffLogin = async (req: Request, res: Response, next: NextFunction) => {
+        
+        try {
+            
+            const {email , password} = req.body
+
+            const response = await this._authService.staffLogin({email , password})
+
+            res.cookie('refresh_token_staff' , response.refreshToken,{
+                httpOnly:true,
+                secure:false,
+                sameSite:'strict',
+                maxAge:30 * 60 * 1000
+            })
+
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    'Staff Login Successfull',
+                    {
+                        accessToken : response.accessToken,
+                        staff : response.staff
+                    }
+                )
+            )
+        } catch (error) {
+
+            console.log("ERROR in AuthController Staff Login:",error);
+            next(error);   
+        }
+    }
+    
+    staffLogout = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            
+            res.clearCookie('refresh_token_staff',{
+                httpOnly:true,
+                sameSite:'strict',
+                secure:false
+            })
+
+            res.status(HttpStatus.OK).json(
+                createResponse(
+                    true,
+                    ResponseMessages.STAFF_LOGOUT_SUCCESS,
+                    null
+                )
+            )
+        } catch (error) {
+            console.log("ERROR in AuthController Staff Logout:",error);
+            next(error);   
+        }
+    }
     
 }

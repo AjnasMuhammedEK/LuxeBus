@@ -18,4 +18,5 @@ export interface IStaffRepository {
     ): Promise<StaffDocument | null>;
     
     updateStaff(staffId: string,operatorId: Types.ObjectId,staffData: Partial<IStaff>): Promise<StaffDocument | null>;
+    findStaffById(staffId: string): Promise<StaffDocument | null>;
 }

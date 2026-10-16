@@ -56,3 +56,9 @@
 export interface GoogleLoginRequest {
     credential: string;
 }
+
+
+export interface StaffLoginFromData {
+    email:string , 
+    password : string
+}

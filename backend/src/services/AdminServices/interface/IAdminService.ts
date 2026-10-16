@@ -11,7 +11,7 @@ export interface IAdminService {
             limit: number;
         };
     }>
-    updateOperatorStatus(operatorId: string,status: string): Promise<IOperator>
+    updateOperatorStatus(operatorId: string,status: string , reason : string | null): Promise<IOperator>
     getDocumentSignedUrl(objectKey: string): Promise<string>
     updateOperatorBlock(operatorId: string,isBlocked: boolean): Promise<IOperator>;
 }

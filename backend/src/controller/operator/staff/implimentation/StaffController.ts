@@ -11,21 +11,12 @@ import { StaffSortField } from "../../../../types/staff";
 
         constructor (
             @inject(TYPES.StaffService)
-            private staffService : IstaffService
+            private _staffService : IstaffService
         ){}
 
         staffRegister = async (req: Request, res: Response, next: NextFunction) => {
             try {
-
-        
-
-                
-
-                console.log('staffCalled controller')
-
-                
-    
-
+ 
                 const {
                     fullName,                
                     mobileNumber,
@@ -49,20 +40,13 @@ import { StaffSortField } from "../../../../types/staff";
              
                     return;
                 }
-                // console.log('--------------------------------------------------------------------------')
-
-                
-
-
-                // console.log('--------------------------------------------------------------------------')
-
-                // console.log(operatorId,'-----------------operatorId----------------')
+ 
 
                 const files = req.files as {
                     [fieldname: string]: Express.Multer.File[];
                 };
 
-                const staff = await this.staffService.staffRegister(
+                const staff = await this._staffService.staffRegister(
                     {
                         fullName,
                         mobileNumber,
@@ -111,7 +95,7 @@ import { StaffSortField } from "../../../../types/staff";
                 const {page = '1' , limit = '5' , search = '' , sortBy = 'fullName',sortOrder = 'asc'} = req.query
                 
 
-                const response = await this.staffService.getStaffs(
+                const response = await this._staffService.getStaffs(
                     operatorId as string,
                     {
                         page:Number(page),
@@ -146,7 +130,7 @@ import { StaffSortField } from "../../../../types/staff";
                 if(!objectKey){
                     throw new Error('Object key is Missing')
                 }
-                const signedUrl = await this.staffService.getDocumentSignedUrl(objectKey as string)
+                const signedUrl = await this._staffService.getDocumentSignedUrl(objectKey as string)
                 // console.log('Backend signer url' , signedUrl)
 
  
@@ -206,7 +190,7 @@ import { StaffSortField } from "../../../../types/staff";
                     [fieldname: string]: Express.Multer.File[];
                 };
 
-                const updatedStaff = await this.staffService.editStaff(
+                const updatedStaff = await this._staffService.editStaff(
                     staffId,
                     {
                         fullName,
@@ -222,23 +206,18 @@ import { StaffSortField } from "../../../../types/staff";
                     operatorId
                 )
 
-                    res.status(HttpStatus.OK).json(
-                        createResponse(
-                            true,
-                            'Staff Updated Successfully',
-                            {
-                                staff : updatedStaff
-                            }
-                        )
+                res.status(HttpStatus.OK).json(
+                    createResponse(
+                        true,
+                        'Staff Updated Successfully',
+                        {
+                            staff : updatedStaff
+                        }
                     )
-
-               
-
+                )
 
             } catch (error) {
                 next(error)
             }
         }
-
-        
     }

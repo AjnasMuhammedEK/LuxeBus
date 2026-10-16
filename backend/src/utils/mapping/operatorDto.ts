@@ -17,7 +17,8 @@ export const operatorDataMapping = (operator:OperatorDocument) :IOperatorMappedD
         registrationCertificate: operator.registrationCertificate,
         taxCertificate: operator.taxCertificate,
         transportLicense: operator.transportLicense,
-        status: operator.status
+        status: operator.status,
+        rejectReason : operator.rejectReason
 
     }
 }

@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
  
 import { logoutOperator } from "@/redux/slice/operatorAuthSlice";
-
+import toast from 'react-hot-toast'
 import { operatorLogout } from "@/features/auth/services/authService";
 import type { RootState } from "@/redux/store/store";
 
@@ -15,10 +15,12 @@ const OperatorNavbar = () => {
   const handleLogout = async () => {
     try {
       await operatorLogout()
+      toast.success('Logged out successfully') 
       dispatch(logoutOperator())
       navigate("/operator/login");
 
     } catch (error) {
+      toast.error('Operator Logout failed')
       console.log("Operator Logout failed:", error);
     }
   };

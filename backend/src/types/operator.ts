@@ -16,7 +16,9 @@ export interface IOperator {
   taxCertificate: string
   transportLicense : string;
   status: OperatorStatus;
+  rejectReason: string | null;
   isBlocked: boolean;
+  createdAt:Date
 }
 
 export interface IOperatorMappedData {
@@ -34,6 +36,8 @@ export interface IOperatorMappedData {
     taxCertificate: string;
     transportLicense: string;
     status: string;
+    rejectReason : string | null
+ 
 }
 
 export interface IOperatorRegisterData {

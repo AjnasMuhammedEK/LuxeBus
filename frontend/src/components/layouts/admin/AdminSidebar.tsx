@@ -9,6 +9,7 @@ import {
 import logo from "../../../../public/logo.png";
 import { logoutAdmin } from "@/redux/slice/adminAuthSlice";
 import { adminLogout } from "@/features/auth/services/authService";
+import toast from 'react-hot-toast'
 
 interface SidebarLinkItem {
   label: string;
@@ -33,6 +34,7 @@ const AdminSidebar = () => {
     try {
       await adminLogout()
       dispatch(logoutAdmin())
+      toast.success('Logged out successfully') 
     } catch (error) {
       console.log("Admin Logout failed:", error);
     }

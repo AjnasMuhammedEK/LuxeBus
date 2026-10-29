@@ -37,6 +37,7 @@ const startServer = async () => {
         await connectDB()
 
         await redisclient.connect();
+
         app.listen(PORT,()=>{
             logger.info(`Server Started at${PORT}`)
         })        
@@ -44,4 +45,5 @@ const startServer = async () => {
         console.log('Server Failed : ',error)
     }
 }
+
 startServer()

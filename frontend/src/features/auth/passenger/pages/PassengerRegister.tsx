@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import axios from 'axios'
 import {
   BadgeCheck,
   Route,
@@ -12,9 +13,16 @@ import {
   User,
   Eye,
   EyeOff,
+  ShieldCheck,
+  X,
 } from 'lucide-react'
 import type { UserRegisterFormData } from '@/types/auth.types'
-import { registerUser } from "@/features/auth/services/authService";
+// verifyUserRegistrationOtp is a placeholder name: point it to your real verify OTP API
+import {
+  registerUser,
+  generateUserRegistrationOtp,
+  verifyUserRegistrationOtp,
+} from "@/features/auth/services/authService";
 import {
   passengerRegisterSchema,
   getValidationErrors,
@@ -29,7 +37,8 @@ const features = [
   { icon: Zap, label: 'Instant booking' },
 ]
 
-
+const OTP_LENGTH = 6
+const RESEND_SECONDS = 120 // 2 minutes
 
 type FormErrors = Partial<Record<keyof UserRegisterFormData, string>>
 
@@ -46,6 +55,25 @@ const SignUpSection = () => {
     password: '',
   })
 
+  // ---------- OTP modal state ----------
+  const [showOtpModal, setShowOtpModal] = useState(false)
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''))
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+  const [resendTimer, setResendTimer] = useState(RESEND_SECONDS)
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const pendingData = useRef<Parameters<typeof registerUser>[0] | null>(null)
+
+  // countdown for resend
+  useEffect(() => {
+    if (!showOtpModal || resendTimer <= 0) return
+    const t = setTimeout(() => setResendTimer((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [showOtpModal, resendTimer])
+
+  const formatTimer = (s: number) =>
+    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -56,6 +84,106 @@ const SignUpSection = () => {
       delete next[name as keyof UserRegisterFormData]
       return next
     })
+  }
+
+  const handleOtp = async () => {
+    try {
+
+      const response = await generateUserRegistrationOtp(formData.email)
+      toast.success(response.message)
+      return true
+
+     } catch (error) {
+
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message || 'Something went wrong'
+
+        toast.error(message)
+      } else {
+        toast.error('Something went wrong')
+      }
+      return false
+    }
+  }
+
+  // ---------- OTP modal handlers ----------
+  const handleOtpChange = (index: number, value: string) => {
+    const digit = value.replace(/[^0-9]/g, '').slice(-1)
+
+    setOtp((prev) => {
+      const next = [...prev]
+      next[index] = digit
+      return next
+    })
+
+    if (digit && index < OTP_LENGTH - 1) {
+      otpInputRefs.current[index + 1]?.focus()
+    }
+  }
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, OTP_LENGTH)
+    if (!pasted) return
+    e.preventDefault()
+    setOtp((prev) => {
+      const next = [...prev]
+      pasted.split('').forEach((char, i) => {
+        next[i] = char
+      })
+      return next
+    })
+    const lastIndex = Math.min(pasted.length, OTP_LENGTH) - 1
+    otpInputRefs.current[lastIndex]?.focus()
+  }
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0) return
+    setIsResending(true)
+    const sent = await handleOtp()
+    if (sent) {
+      setOtp(Array(OTP_LENGTH).fill(''))
+      setResendTimer(RESEND_SECONDS)
+      otpInputRefs.current[0]?.focus()
+    }
+    setIsResending(false)
+  }
+
+  const handleVerifyOtp = async () => {
+    const code = otp.join('')
+    if (code.length !== OTP_LENGTH) {
+      toast.error('Please enter the 6 digit verification code')
+      return
+    }
+
+    setIsVerifying(true)
+    try {
+      await verifyUserRegistrationOtp(formData.email, code)
+
+      if (pendingData.current) {
+        await registerUser(pendingData.current)
+      }
+
+      toast.success('Registration successful!')
+      setShowOtpModal(false)
+
+      setTimeout(() => {
+        navigate('/login')
+      }, 2000)
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Invalid or expired code')
+      } else {
+        toast.error('Invalid or expired code')
+      }
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
   const handleSubmit = async () => {
@@ -72,12 +200,15 @@ const SignUpSection = () => {
     setIsSubmitting(true)
 
     try {
-      await registerUser(result.data)
-      toast.success('Registration successful!')
+      // save the validated data, send OTP, then open the modal
+      pendingData.current = result.data
+      const sent = await handleOtp()
 
-      setTimeout(() => {
-        navigate('/login')
-      },2000)
+      if (sent) {
+        setOtp(Array(OTP_LENGTH).fill(''))
+        setResendTimer(RESEND_SECONDS)
+        setShowOtpModal(true)
+      }
     } catch  {
 
       const message ="Registration failed. Please try again.";
@@ -276,6 +407,91 @@ const SignUpSection = () => {
           </div>
         </div>
       </div>
+
+      {/* ---------- OTP Modal ---------- */}
+      {showOtpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
+          <div className="relative flex w-full max-w-md flex-col gap-4 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+            <button
+              type="button"
+              onClick={() => setShowOtpModal(false)}
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div>
+              <h3 className="text-2xl font-bold text-slate-900">Verify your email</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Enter the verification code to complete your registration.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+              <div>
+                <p className="text-sm font-semibold text-emerald-900">Code sent</p>
+                <p className="mt-0.5 text-sm text-emerald-700">
+                  Check <span className="font-medium">{formData.email}</span> for your verification
+                  code.
+                </p>
+              </div>
+            </div>
+
+            <label className="flex flex-col gap-2">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                Enter 6 Digit Code
+              </span>
+              <div className="flex items-center justify-between gap-2">
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => {
+                      otpInputRefs.current[index] = el
+                    }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    autoFocus={index === 0}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    onPaste={handleOtpPaste}
+                    className="h-12 w-12 rounded-lg border border-slate-200 bg-slate-50 text-center text-lg font-semibold text-slate-900 outline-none ring-1 ring-transparent transition-shadow focus:border-blue-400 focus:ring-blue-100"
+                  />
+                ))}
+              </div>
+            </label>
+
+            <button
+              type="button"
+              onClick={handleVerifyOtp}
+              disabled={isVerifying}
+              className="flex h-[46px] w-full items-center justify-center gap-1.5 rounded-lg bg-blue-900 text-sm font-semibold text-white shadow-md shadow-blue-900/20 transition-colors hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isVerifying ? 'Verifying...' : 'Verify Code'}
+            </button>
+
+            <div className="text-center text-sm text-slate-500">
+              {resendTimer > 0 ? (
+                <span>
+                  Resend code in{' '}
+                  <span className="font-semibold text-slate-700">{formatTimer(resendTimer)}</span>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={isResending}
+                  className="font-semibold text-blue-700 hover:text-blue-600 disabled:opacity-60"
+                >
+                  {isResending ? 'Resending...' : "Didn't get it? Resend code"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

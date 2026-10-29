@@ -94,10 +94,7 @@ export class AuthService implements IAuthService {
             accessToken,
             refreshToken
         };
-
-
     }
-
 
     async operatorRegister(data: IOperatorRegisterData,files: {[fieldname: string]: Express.Multer.File[];}){
 
@@ -155,6 +152,10 @@ export class AuthService implements IAuthService {
 
         const isMAtch = await bcrypt.compare(password,exist.password)
 
+        if(!isMAtch){
+            throw new Error('Password Incorrect')
+        }
+
         if(exist.isBlocked){
             throw new Error('operator account has been blocked ! please contact our support team')
         }
@@ -197,6 +198,51 @@ export class AuthService implements IAuthService {
             accessToken,
             refreshToken
         };
+    }
+
+    async genrateOperatorOtp(data: { email: string })  {
+        const email = data.email
+
+        const existOperator = await this._operatorRepository.findOperatorByEmail(email)
+
+        if(existOperator){
+            throw new Error('Operator Is Already Exist')
+        }
+
+        const  {otp , hashedOtp}  = generateOtp() 
+
+        const redisKey = `operatorRegisterOtp:${email}`
+
+        await redisclient.setEx(
+            redisKey,
+            120,
+            hashedOtp
+        )
+
+        await this._emailService.sendOtpEmail(email , otp)
+
+        return {success : true , operatorOtp:otp}
+    }
+
+    async verifyOperatorOtp (data : {email : string , otp : string }) {
+
+        const {email , otp} = data
+
+        const redisKey = `operatorRegisterOtp:${email}`
+        const storedOtp = await redisclient.get(redisKey)
+
+        if(!storedOtp){
+            throw new Error('OTP Expired , Please Resent OTP')
+        }
+        
+        const hasedOperatorOtp = crypto.createHash('sha256').update(otp).digest('hex')
+
+        if(storedOtp !== hasedOperatorOtp){
+            throw new Error('Invalid OTP')
+        }
+
+        console.log('OTP VErified from the servce')
+        return {success : true , message : 'OTP Verified'}
     }
 
     
@@ -440,6 +486,57 @@ export class AuthService implements IAuthService {
             accessToken,
             refreshToken
         }
+    }
+
+
+    async generateUserRegistrationOtp (data: { email: string; })  {
+        
+        const {email} = data
+
+        const existUser = await this._userRepository.findUserByEmail(email)
+
+        if(existUser){
+            throw new Error ('User Already Exist')
+        }
+
+        const {otp , hashedOtp} = generateOtp()
+
+        const redistKey = `userRegisterationOtp:${email}`
+
+        await redisclient.setEx(
+            redistKey,
+            120,
+            hashedOtp
+        )
+
+        await this._emailService.sendOtpEmail(email,otp)
+
+        return {success:true , message : `Otp Sent to ${email}`}
+    }
+
+    async verifyUserRegistrationOtp (data : {email : string , otp : string}) {
+
+        const {email , otp} = data
+
+        console.log('Email & otp from auth Service' , email , otp)
+
+        const redistKey = `userRegisterationOtp:${email}` 
+
+        const storedOtp = await redisclient.get(redistKey)
+
+        if(!storedOtp){
+            throw new Error('Otp Invalid')
+        }
+
+        const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex')
+
+        if(storedOtp !== hashedOtp){
+            throw new Error('Invalid OTP')
+        }
+
+        console.log('Opt Verified auth service User')
+
+        return {success : true , message : 'OTP verified'}
     }
 
 }

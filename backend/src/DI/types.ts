@@ -12,5 +12,7 @@ export const TYPES = {
   StaffRepository:Symbol.for('StaffRepository'),
   StaffService: Symbol.for('StaffService'),
   StaffController: Symbol.for('StaffController'),
-  
+  OperatorRepository: Symbol.for("OperatorRepository"),
+  OperatorController: Symbol.for('OperatorController'),
+  OperatorService : Symbol.for('OperatorService')
 };

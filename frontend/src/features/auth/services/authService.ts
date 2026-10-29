@@ -2,7 +2,8 @@
 import { publicApi } from '@/services/publicAoi'
 
 import { AUTH_BASE_ROUTE } from '@/constants/apiRoutes'
-import type { UserRegisterFormData , UserLoginFormData, OperatorLoginFormData , userForgotPasswordEmailVeryfication ,UserVerifyForgotPasswordOtp, UserResetPassword, StaffLoginFromData } from '@/types/auth.types'
+import type { UserRegisterFormData , UserLoginFormData, OperatorLoginFormData ,OperatorOtpGenerate, userForgotPasswordEmailVeryfication ,UserVerifyForgotPasswordOtp, UserResetPassword, StaffLoginFromData } from '@/types/auth.types'
+import { email } from 'zod'
 // import { passengerApi } from '@/services/api'
 // import { operatorApi } from '@/services/api'
 // import { adminAPi } from '@/services/api'
@@ -53,6 +54,16 @@ export const googleLogin = async (credential: string) => {
 };
 
 
+export const genrateOperatorOTPverify  = async (email : string) => {
+    const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/generateOperatorOtp`,{email})
+    return response.data
+}
+
+export const verifyOperatorOtp = async (email : string , otp : string) => {
+    const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/verifyOperatorOtp`,{email , otp})
+    return response.data
+}
+
 
 export const userLogout = async () => {
     const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/userLogout`)
@@ -78,5 +89,15 @@ export const staffLogin = async (data : StaffLoginFromData) => {
 
 export const staffLogout = async () => {
     const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/staffLogout`)
+    return response.data
+}
+
+export const generateUserRegistrationOtp = async (email : string) => {
+    const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/generateUserRegistrationOtp`,{email})
+    return response.data 
+}
+
+export const verifyUserRegistrationOtp = async (email : string , otp : string) => {
+    const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/verifyUserRegistrationOtp`,{email , otp})
     return response.data
 }

@@ -26,6 +26,12 @@ import { StaffRepository } from "../repositories/syaffRepository/implimentation/
 import { StaffService } from "../services/operatorService/staff/implimentation/staffService";
 import { IStaffController } from "../controller/operator/staff/interface/IStaffController";
 import { StaffController } from "../controller/operator/staff/implimentation/StaffController";
+import { IOperatorRepository } from "../repositories/Operator/interface/IOperatorRepository";
+import { OperatorRepository } from "../repositories/Operator/implementation/OperatorRepository";
+import { IOperatorService } from "../services/operatorService/interface/IOperatorService";
+import { OperatorService } from "../services/operatorService/implementation/OperatorService";
+import { IOperatorController } from "../controller/operator/interface/IOperatorController";
+import { OperatorController } from "../controller/operator/implementation/OperatorController";
 
 export const container = new Container();
 
@@ -78,5 +84,14 @@ container
 .bind<IStaffController>(TYPES.StaffController)
 .to(StaffController)
 
+container
+  .bind<IOperatorRepository>(TYPES.OperatorRepository)
+  .to(OperatorRepository);
 
- 
+  container
+  .bind<IOperatorService>(TYPES.OperatorService)
+  .to(OperatorService);
+
+container
+  .bind<IOperatorController>(TYPES.OperatorController)
+  .to(OperatorController);

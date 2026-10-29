@@ -43,9 +43,23 @@ const operatorAuthSlice = createSlice({
       state.accessToken = null;
       state.isAuthenticated = false;
     },    
+
+
+    updateOperatorStatus: (
+  state,
+  action: PayloadAction<IOperator["status"]>
+) => {
+  if (state.operator) {
+    state.operator.status = action.payload;
+
+    if (action.payload === "pending") {
+      state.operator.rejectReason = null;
+    }
+  }
+},
   }
 });
 
-export const {loginOperator,setOperatorAccessToken,logoutOperator,} = operatorAuthSlice.actions;
+export const {loginOperator,setOperatorAccessToken,logoutOperator,updateOperatorStatus} = operatorAuthSlice.actions;
 
 export default operatorAuthSlice.reducer;

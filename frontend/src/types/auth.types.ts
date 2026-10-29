@@ -62,3 +62,6 @@ export interface StaffLoginFromData {
     email:string , 
     password : string
 }
+export interface OperatorOtpGenerate {
+    email : string
+}

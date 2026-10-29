@@ -63,3 +63,13 @@ export interface IOperatorListResponse {
   operators: IOperator[];
   pagination: IOperatorPagination;
 }
+
+export interface IOperatorResubmitData {
+    ownerName: string
+    phone: string
+    legalEntityName: string
+    gstNumber: string
+    panNumber: string
+    yearOfIncorporation: string
+    authorisedRepresentative: string
+}

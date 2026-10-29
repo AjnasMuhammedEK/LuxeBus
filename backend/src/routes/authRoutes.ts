@@ -29,5 +29,10 @@ router.post('/operatorLogout',authController.operatorLogout)
 router.post('/staffLogin',authController.staffLogin)
 router.post('/staffLogout',authController.staffLogout)
 router.post('/staff-refresh-token',authController.staffRefreshToken)
+router.post('/generateOperatorOtp' , authController.generateOperatorOtp)
+router.post('/verifyOperatorOtp',authController.verifyOperatorOtp)
+router.post('/generateUserRegistrationOtp',authController.generateUserRegistrationOtp)
+router.post('/verifyUserRegistrationOtp',authController.verifyUserRegistrationOtp)
+
 
 export default router;

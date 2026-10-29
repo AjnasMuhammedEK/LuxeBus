@@ -36,6 +36,11 @@ adminApi.interceptors.response.use((response) => response , async (error) => {
             const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/admin-refresh-token`)
             const accessToken = response.data.data.accessToken
 
+
+            if (!accessToken) {
+            throw new Error("Access token missing from refresh response")
+            }
+
             if(accessToken){
                 store.dispatch(setAdminAccessToken(accessToken))
             }

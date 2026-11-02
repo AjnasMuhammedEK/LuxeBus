@@ -8,13 +8,10 @@ interface AdminState {
   isAuthenticated: boolean;
 }
 
-
 interface AdminLoginPayload {
   admin: IUser;
   accessToken: string;
 }
-
-
 
 const initialState: AdminState = {
   admin: null,
@@ -23,30 +20,29 @@ const initialState: AdminState = {
 };
 
 const adminAuthSlice = createSlice({
-  name:'adminAuth',
+  name: "adminAuth",
   initialState,
 
-  reducers : {
-    loginAdmin : (
-      state , action : PayloadAction<AdminLoginPayload>
-    ) => {
-      state.admin = action.payload.admin
-      state.accessToken = action.payload.accessToken
-      state.isAuthenticated = true
+  reducers: {
+    loginAdmin: (state, action: PayloadAction<AdminLoginPayload>) => {
+      state.admin = action.payload.admin;
+      state.accessToken = action.payload.accessToken;
+      state.isAuthenticated = true;
     },
 
-    setAdminAccessToken : (state , action : PayloadAction <string>) => {
-      state.accessToken = action.payload
+    setAdminAccessToken: (state, action: PayloadAction<string>) => {
+      state.accessToken = action.payload;
     },
 
-    logoutAdmin : (state) => {
-      state.admin = null
-      state.accessToken = null
-      state.isAuthenticated = false
-    }
-  }
+    logoutAdmin: (state) => {
+      state.admin = null;
+      state.accessToken = null;
+      state.isAuthenticated = false;
+    },
+  },
 });
 
-export const {loginAdmin,setAdminAccessToken,logoutAdmin} = adminAuthSlice.actions;
+export const { loginAdmin, setAdminAccessToken, logoutAdmin } =
+  adminAuthSlice.actions;
 
 export default adminAuthSlice.reducer;

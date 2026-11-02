@@ -22,3 +22,9 @@ export const operatorDataMapping = (operator:OperatorDocument) :IOperatorMappedD
 
     }
 }
+
+export const operatorListMapping = (
+    operators: OperatorDocument[]
+): IOperatorMappedData[] => {
+    return operators.map(operatorDataMapping);
+};

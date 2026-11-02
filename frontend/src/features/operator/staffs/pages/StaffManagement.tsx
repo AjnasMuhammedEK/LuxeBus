@@ -1,13 +1,15 @@
 // src/features/operator/staff/pages/StaffManagement.tsx
 import { Eye } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Users, UserCheck, Search, Pencil, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Users, UserCheck, Search, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
 import AddStaffModal from "@/features/operator/staffs/components/AddStaffModal";
 import type { IStaff } from "@/types/staff.types";
 import { getStaffs } from "../service/staffService";
 import StaffDetailsModal from "../components/StaffDetailsModal";
 import EditStaffModal from "../components/EditStaffModal";
+import DataTable from "@/components/common/tables/DataTable"
+import type { Column } from "@/components/common/tables/DataTable"
 
 const PAGE_SIZE = 5;
 
@@ -110,7 +112,97 @@ const StaffManagement = () => {
     return staff.filter((member) => member.status === "on-duty").length;
   }, [staff]);
 
- 
+
+  const staffColumns: Column<IStaff>[] = [
+    {
+      key: "name",
+      header: "Staff Name",
+      render: (member) => (
+        <span className="font-medium text-slate-800">
+          {member.fullName}
+        </span>
+      ),
+    },
+    {
+      key: "role",
+      header: "Role",
+      render: (member) => (
+        <span className="capitalize text-slate-500">
+          {member.role}
+        </span>
+      ),
+    },
+    {
+      key: "phone",
+      header: "Mobile Number",
+      render: (member) => member.phone,
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (member) => (
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+            member.status === "on-duty"
+              ? "bg-blue-50 text-blue-700"
+              : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              member.status === "on-duty"
+                ? "bg-blue-600"
+                : "bg-slate-400"
+            }`}
+          />
+          {member.status === "on-duty"
+            ? "On-duty"
+            : "Off-duty"}
+        </span>
+      ),
+    },
+    {
+      key: "blocked",
+      header: "Blocked",
+      render: (member) => (
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+            member.isBlocked
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+          }`}
+        >
+          {member.isBlocked ? "Blocked" : "Active"}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (member) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            type="button"
+            onClick={() => handleViewStaff(member)}
+            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            aria-label={`View ${member.fullName}`}
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleEditStaff(member)}
+            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            aria-label={`Edit ${member.fullName}`}
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
 
   return (
     <div className="min-h-screen w-full bg-slate-50 px-4 py-6 sm:px-6">
@@ -201,7 +293,7 @@ const StaffManagement = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-[11px] font-medium uppercase tracking-wide text-slate-500">
@@ -287,7 +379,20 @@ const StaffManagement = () => {
                 )}
               </tbody>
             </table>
-          </div>
+          </div> */}
+
+
+ 
+          <DataTable
+            columns={staffColumns}
+            data={staff}
+            getRowKey={(member) => member._id}
+            loading={isLoading}
+            loadingMessage="Loading staff..."
+            emptyMessage="No staff match your search."
+            minWidth="640px"
+          />
+
 
           <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row">
             <p className="text-xs text-slate-400">

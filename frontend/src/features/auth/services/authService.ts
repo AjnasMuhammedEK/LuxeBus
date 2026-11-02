@@ -2,11 +2,8 @@
 import { publicApi } from '@/services/publicAoi'
 
 import { AUTH_BASE_ROUTE } from '@/constants/apiRoutes'
-import type { UserRegisterFormData , UserLoginFormData, OperatorLoginFormData ,OperatorOtpGenerate, userForgotPasswordEmailVeryfication ,UserVerifyForgotPasswordOtp, UserResetPassword, StaffLoginFromData } from '@/types/auth.types'
-import { email } from 'zod'
-// import { passengerApi } from '@/services/api'
-// import { operatorApi } from '@/services/api'
-// import { adminAPi } from '@/services/api'
+import type { UserRegisterFormData , UserLoginFormData, OperatorLoginFormData ,  userForgotPasswordEmailVeryfication ,UserVerifyForgotPasswordOtp, UserResetPassword, StaffLoginFromData } from '@/types/auth.types'
+ 
  
 export const registerUser = async (data:UserRegisterFormData) => {
     const response = await publicApi.post(`/${AUTH_BASE_ROUTE}/register`,data)

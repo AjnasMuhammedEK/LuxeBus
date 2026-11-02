@@ -21,7 +21,7 @@ export interface IAuthService {
   staffRefreshToken(refreshToken : string):Promise<{accessToken : string}>
   staffLogin (data:{email :string , password : string}) : Promise<{staff: IStaffMappedData;accessToken: string; refreshToken:string}>
   genrateOperatorOtp(data:{email : string}):Promise<{operatorOtp:string}>
-  verifyOperatorOtp(data:{email : String , otp : string }) : Promise<{success: boolean;message: string;}>
+  verifyOperatorOtp(data:{email : string , otp : string }) : Promise<{success: boolean;message: string;}>
   generateUserRegistrationOtp(data :{email:string}):Promise<{success: boolean , message:string}>
   verifyUserRegistrationOtp(data :{email : string , otp : string}): Promise<{success: boolean;message: string;}>
  }

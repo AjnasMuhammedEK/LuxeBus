@@ -24,10 +24,10 @@ const logger = createLogger({
   format: loggerFormat,
 
   transports: [
-    // Show logs in the terminal
+     
     new transports.Console(),
 
-    // Normal logs: info, warn, etc. Excludes errors
+     
     new DailyRotateFile({
       filename: "logs/app-%DATE%.log",
       datePattern: "YYYY-MM-DD",
@@ -38,7 +38,7 @@ const logger = createLogger({
       ),
     }),
 
-    // Error logs only
+     
     new DailyRotateFile({
       filename: "logs/error-%DATE%.log",
       datePattern: "YYYY-MM-DD",

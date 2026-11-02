@@ -81,9 +81,9 @@ const OperatorRegisterSection = () => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false)
-  const [otpSent , setOtpSent] = useState(true)
+ 
 
-  // ---------- OTP modal state ----------
+  
   const [showOtpModal, setShowOtpModal] = useState(false)
   const OTP_LENGTH = 6
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''))
@@ -127,7 +127,7 @@ const OperatorRegisterSection = () => {
 
 
   const handleOperatorOtp = async () => {
-    setOtpSent(true)
+ 
 
     try {
       console.log(formData.email)

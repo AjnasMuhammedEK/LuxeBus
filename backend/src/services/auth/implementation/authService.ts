@@ -88,7 +88,6 @@ export class AuthService implements IAuthService {
 
         logger.info(`User logged in: ${email}`);
       
-
         return {
             user: userDataMapping(existUser),
             accessToken,

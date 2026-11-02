@@ -32,29 +32,28 @@ export class OperatorService implements IOperatorService {
         files: { [fieldname: string]: Express.Multer.File[] }
     ): Promise<IOperator> {
 
-        // 1. Find operator
-        const operator =
-            await this._operatorRepository.findOperatorById(operatorId);
+        
+        const operator = await this._operatorRepository.findOperatorById(operatorId);
 
         if (!operator) {
             throw new Error("Operator not found");
         }
 
-        // 2. Only rejected operators can resubmit
+       
         if (operator.status !== "rejected") {
             throw new Error(
                 "Only rejected registrations can be resubmitted"
             );
         }
 
-        // 3. Prepare updated details
+         
         const updateData: Partial<IOperator> = {
             ...data,
             status: "pending",
             rejectReason : null
         };
 
-        // 4. Upload newly submitted documents
+         
         for (const key of documentKeys) {
             const file = files?.[key]?.[0];
 
@@ -66,7 +65,7 @@ export class OperatorService implements IOperatorService {
             }
         }
 
-        // 5. Update operator in database
+     
         const updatedOperator =
             await this._operatorRepository.resubmitOperator(
                 operatorId,
@@ -77,7 +76,7 @@ export class OperatorService implements IOperatorService {
             throw new Error("Failed to resubmit operator details");
         }
 
-        // 6. Return updated operator
+         
         return updatedOperator;
     }
 }

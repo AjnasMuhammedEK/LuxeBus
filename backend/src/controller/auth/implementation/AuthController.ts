@@ -29,18 +29,15 @@ export class AuthController implements IAuthController {
           createResponse(true, ResponseMessages.USER_REGISTER_SUCCESS, null),
         );
     } catch (error) {
-        logger.error("ERROR in AuthCOntroller user Resgitser :", error)
-       
+      logger.error("ERROR in AuthCOntroller user Resgitser :", error);
+
       next(error);
     }
   };
 
   userLogin = async (req: Request, res: Response, next: NextFunction) => {
     try {
-    //   const { email, password } = req.body;
-
-    const email = 'ajnas54321@gmail.com'
-    const password = '12342123'
+      const { email, password } = req.body;
 
       const response = await this._authService.userLogin({ email, password });
 
@@ -50,8 +47,6 @@ export class AuthController implements IAuthController {
         sameSite: "strict",
         maxAge: 30 * 60 * 1000,
       });
-
-      
 
       res.status(HttpStatus.OK).json(
         createResponse(true, ResponseMessages.USER_LOGIN_SUCCESS, {
@@ -132,7 +127,7 @@ export class AuthController implements IAuthController {
       );
     } catch (error) {
       logger.error("ERROR in AuthCOntroller operator Login :", error);
-      
+
       next(error);
     }
   };
@@ -151,7 +146,7 @@ export class AuthController implements IAuthController {
 
       const response = await this._authService.genrateOperatorOtp({ email });
 
-      // console.log('Auth controller response = = = ',response)
+      console.log("Auth controller response = = = ", response);
 
       res
         .status(HttpStatus.OK)
@@ -180,7 +175,7 @@ export class AuthController implements IAuthController {
         throw new Error("Email or OTP is not Available");
       }
 
-      const response = await this._authService.verifyOperatorOtp({
+      await this._authService.verifyOperatorOtp({
         email,
         otp,
       });

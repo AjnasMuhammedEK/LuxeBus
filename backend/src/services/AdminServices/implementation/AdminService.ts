@@ -4,6 +4,8 @@ import { IAdminRepository } from "../../../repositories/AdminRepository/interfac
 import { IAdminService } from "../interface/IAdminService";
 import { IOperator } from "../../../types/operator";
 import { IStorageService } from "../../storage/interfaces/IStorageService";
+import { operatorListMapping  } from '../../../utils/mapping/operatorDto';
+
 @injectable()
 export class AdminService implements IAdminService {
 
@@ -31,7 +33,7 @@ export class AdminService implements IAdminService {
         );
 
         return {
-            operators: result.operators,
+            operators: operatorListMapping (result.operators),
             pagination: {
                 currentPage: page,
                 totalPages,

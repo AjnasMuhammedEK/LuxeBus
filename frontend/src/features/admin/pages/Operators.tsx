@@ -3,6 +3,8 @@ import { Bus, Users, Ticket, Wallet, TrendingUp, ArrowUpRight, Search, X, ArrowU
 import { getOperators, updateOperatorStatus, updateOperatorBlockStatus } from '@/features/admin/services/adminService'
 import OperatorDetailsModal, {StatusBadge} from '@/features/admin/components/OperatorDetailsModal'
 import type { IOperator } from '@/types/operator.types'
+import DataTable from "@/components/common/tables/DataTable";
+import type { Column } from "@/components/common/tables/DataTable";
 
 interface StatCardData {
   label: string
@@ -152,6 +154,69 @@ const MasterCommandCenter = () => {
   const showingFrom = totalOperators === 0 ? 0 : (page - 1) * limit + 1
   const showingTo = Math.min(page * limit, totalOperators)
 
+
+
+  const operatorColumns: Column<IOperator>[] = [
+    {
+      key: "agency",
+      header: "Agency Name",
+      render: (operator) => (
+        <>
+          <div className="font-semibold text-slate-900">
+            {operator.legalEntityName}
+          </div>
+          <div className="text-xs text-slate-400">
+            {operator.ownerName}
+          </div>
+        </>
+      ),
+    },
+    {
+      key: "email",
+      header: "Email",
+      render: (operator) => operator.email,
+    },
+    {
+      key: "phone",
+      header: "Phone",
+      render: (operator) => operator.phone,
+    },
+    {
+      key: "gst",
+      header: "GST Number",
+      render: (operator) => operator.gstNumber,
+    },
+    {
+      key: "createdAt",
+      header: "Reg. Date",
+      render: (operator) =>
+        new Date(operator.createdAt).toLocaleDateString(),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (operator) => (
+        <StatusBadge status={operator.status} />
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (operator) => (
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={() => setSelectedOperator(operator)}
+            className="text-xs font-semibold text-blue-700 hover:text-blue-600"
+          >
+            Review
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+
   return (
     <section className="min-h-screen w-full bg-slate-50 px-4 py-10 sm:px-6 lg:px-10">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
@@ -276,7 +341,7 @@ const MasterCommandCenter = () => {
           </div>
 
           {/* Table */}
-          <div className={`overflow-x-auto transition-opacity duration-150 ${loading && operators.length > 0 ? 'pointer-events-none opacity-50' : ''}`}>
+          {/* <div className={`overflow-x-auto transition-opacity duration-150 ${loading && operators.length > 0 ? 'pointer-events-none opacity-50' : ''}`}>
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -338,6 +403,26 @@ const MasterCommandCenter = () => {
                 )}
               </tbody>
             </table>
+          </div> */}
+
+          {/* Reusable Table */}
+          <div
+            className={`transition-opacity duration-150 ${
+              loading && operators.length > 0
+                ? "pointer-events-none opacity-50"
+                : ""
+            }`}
+          >
+            <DataTable
+              columns={operatorColumns}
+              data={operators}
+              getRowKey={(operator) => operator._id}
+              loading={loading}
+              error={error}
+              loadingMessage="Loading operators..."
+              emptyMessage="No operators found."
+              minWidth="900px"
+            />
           </div>
 
           {/* Pagination */}

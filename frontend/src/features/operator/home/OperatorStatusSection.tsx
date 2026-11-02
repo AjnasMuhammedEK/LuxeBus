@@ -33,6 +33,9 @@ const OperatorStatusSection = () => {
    const [showResubmitModal, setShowResubmitModal] = useState(false);
    const [isResubmitting, setIsResubmitting] = useState(false);
 
+
+   const dispatch = useDispatch();
+
    const [resubmitData, setResubmitData] = useState({
     ownerName: "",
     phone: "",
@@ -85,7 +88,7 @@ const OperatorStatusSection = () => {
     setShowResubmitModal(true);
   };
 
-  const dispatch = useDispatch();
+  
 
   const handleResubmitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

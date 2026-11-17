@@ -6,67 +6,78 @@ import { BaseRepositary } from "../../BaseRepository";
 import { QueryFilter } from "mongoose";
 
 @injectable()
-export class AdminRepository implements IAdminRepository {
+export class AdminRepository
+  extends BaseRepositary<IOperator>
+  implements IAdminRepository
+{
+  constructor() {
+    super(Operator);
+  }
 
-    private operatorRepository = new BaseRepositary(Operator)
+  async getOperators(
+    page: number,
+    limit: number,
+    search: string,
+    sortBy: string,
+    sortOrder: string,
+  ): Promise<{
+    operators: OperatorDocument[];
+    totalItems: number;
+  }> {
+    const skip = (page - 1) * limit;
 
-    async getOperators(page: number,limit: number,search: string, sortBy: string, sortOrder: string): Promise<{
-        operators: OperatorDocument[];
-        totalItems: number;
-    }>  {
+    const filter: QueryFilter<IOperator> = {};
 
-
-        const skip = (page - 1) * limit;
-
-        const filter: QueryFilter<IOperator> = {};   
-        
-        if (search) {
-            filter.$or = [
-                { legalEntityName: { $regex: search, $options: "i" } },
-                { email: { $regex: search, $options: "i" } },
-                { phone: { $regex: search, $options: "i" } },
-                
-            ];
-        }
-
-        const allowedSortFields = [
-            "legalEntityName",
-            "ownerName",
-            'createdAt'
-        ];
-
-        const safeSortBy = allowedSortFields.includes(sortBy)
-            ? sortBy
-            : "createdAt";
-
-        const safeSortOrder = sortOrder === "asc" ? 1 : -1;
-
-        const [operators, totalItems] = await Promise.all([
-            Operator.find(filter)
-                .sort({ [safeSortBy]: safeSortOrder })
-                .skip(skip)
-                .limit(limit),
-
-            Operator.countDocuments(filter),
-        ]);        
-
-        return {
-            operators,
-            totalItems,
-        };
+    if (search) {
+      filter.$or = [
+        { legalEntityName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+      ];
     }
 
-    async updateOperatorStatus(operatorId: string,status: string , reason : string | null): Promise<IOperator | null> {
+    const allowedSortFields = ["legalEntityName", "ownerName", "createdAt"];
 
-        return await this.operatorRepository.updateById(operatorId,{ status , rejectReason : reason ?? null });
-    }
+    const safeSortBy = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
 
-    async updateOperatorBlock(operatorId: string,isBlocked: boolean): Promise<IOperator | null> {
+    const safeSortOrder = sortOrder === "asc" ? 1 : -1;
 
-        return await this.operatorRepository.updateById(operatorId,{ isBlocked });
-    }
+    const [operators, totalItems] = await Promise.all([
+      Operator.find(filter)
+        .sort({ [safeSortBy]: safeSortOrder })
+        .skip(skip)
+        .limit(limit),
 
-    async findOperatorById(operatorId: string): Promise<IOperator | null> {
-        return await this.operatorRepository.findById(operatorId)
-    }
+      Operator.countDocuments(filter),
+    ]);
+
+    return {
+      operators,
+      totalItems,
+    };
+  }
+
+  async updateOperatorStatus(
+    operatorId: string,
+    status: string,
+    reason: string | null,
+  ): Promise<IOperator | null> {
+    return await this.updateById(operatorId, {
+      status,
+      rejectReason: reason ?? null,
+    });
+  }
+
+  async updateOperatorBlock(
+    operatorId: string,
+    isBlocked: boolean,
+  ): Promise<IOperator | null> {
+    return await this.updateById(operatorId, { isBlocked });
+  }
+
+  async findOperatorById(operatorId: string): Promise<IOperator | null> {
+    return await this.findById(operatorId);
+  }
 }

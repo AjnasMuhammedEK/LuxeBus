@@ -11,7 +11,7 @@ const formatDateTime = (date: Date) => {
 function StaffNavbar() {
   const [now, setNow] = useState(new Date())
 
-  // TODO: adjust to match your staff auth slice shape
+  
   const staff = useSelector((state: RootState) => state.staffAuth?.staff)
 
   useEffect(() => {

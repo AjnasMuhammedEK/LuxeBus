@@ -22,7 +22,7 @@ export interface IOperator {
 }
 
 export interface IOperatorMappedData {
-    id: string;
+    _id: string;
     ownerName: string;
     email: string;
     phone: string;

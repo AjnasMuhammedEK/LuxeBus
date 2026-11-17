@@ -4,7 +4,7 @@ import { IOperatorMappedData } from "../../types/operator";
 export const operatorDataMapping = (operator:OperatorDocument) :IOperatorMappedData => {
     return {
         
-        id:operator._id.toString(),
+        _id:operator._id.toString(),
         ownerName:operator.ownerName,
         email: operator.email,
         phone: operator.phone,

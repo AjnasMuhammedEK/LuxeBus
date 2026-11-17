@@ -14,5 +14,12 @@ export const TYPES = {
   StaffController: Symbol.for('StaffController'),
   OperatorRepository: Symbol.for("OperatorRepository"),
   OperatorController: Symbol.for('OperatorController'),
-  OperatorService : Symbol.for('OperatorService')
+  OperatorService : Symbol.for('OperatorService'),
+  SeatLayoutRepository: Symbol.for("SeatLayoutRepository"),
+  SeatLayoutService: Symbol.for("SeatLayoutService"),
+  SeatLayoutController : Symbol.for('SeatLayoutController'),
+  BusRepository : Symbol.for('BusRepository'),
+  BusService : Symbol.for('BusService'),
+  BusController : Symbol.for('BusController')
+ 
 };

@@ -30,4 +30,5 @@ export class UserAuthRepository extends BaseRepositary<IUser> implements IUserAu
     async findUserById(id: string): Promise<UserDocument | null> {
         return await this.findById(id)
     }
+ 
 }

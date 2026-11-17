@@ -17,4 +17,16 @@ export interface IAdminController {
     res: Response,
     next: NextFunction,
   ): Promise<void>;
+  getAdminBuses(req: Request, res: Response, next: NextFunction): Promise<void>;
+  getBusDocumentSignedUrl(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void>;
+
+  updateBusStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void>;
 }

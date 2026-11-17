@@ -1,541 +1,553 @@
-import bcrypt from 'bcrypt'
-import { IAuthService } from '../interface/IAuthService'
- import { inject, injectable } from "inversify";
-import { TYPES } from '../../../DI/types';
-import { generateAccessToken ,generateRefreshToken , verifyRefreshToken } from "../../../utils/jwt";
+import bcrypt from "bcrypt";
+import { IAuthService } from "../interface/IAuthService";
+import { inject, injectable } from "inversify";
+import { TYPES } from "../../../DI/types";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../../../utils/jwt";
 import { IStorageService } from "../../storage/interfaces/IStorageService";
 import { OAuth2Client } from "google-auth-library";
-import { generateOtp } from '../../../utils/generateOtp';
-import crypto from 'crypto'
-import redisclient from '../../../config/redis';
-import { IEmailService } from '../../email/interface/IEmailService';
-import { userDataMapping } from '../../../utils/mapping/userDto';
-import { operatorDataMapping } from '../../../utils/mapping/operatorDto';
-import { IUserAuthRepository } from '../../../repositories/auth/userAuth/interfaces/IUserAuthRepository';
-import { IOperatorAuthRepository } from '../../../repositories/auth/operatorAuth/interfaces/IOperatorAuthRepository';
-import { IOperatorRegisterData } from '../../../types/operator';
-import logger from '../../../config/logger';
-import { IStaffRepository } from '../../../repositories/syaffRepository/interface/IStaffRepository';
-import { staffDataMapping } from '../../../utils/mapping/staffDto';
-
+import { generateOtp } from "../../../utils/generateOtp";
+import crypto from "crypto";
+import redisclient from "../../../config/redis";
+import { IEmailService } from "../../email/interface/IEmailService";
+import { userDataMapping } from "../../../utils/mapping/userDto";
+import { operatorDataMapping } from "../../../utils/mapping/operatorDto";
+import { IUserAuthRepository } from "../../../repositories/auth/userAuth/interfaces/IUserAuthRepository";
+import { IOperatorAuthRepository } from "../../../repositories/auth/operatorAuth/interfaces/IOperatorAuthRepository";
+import { IOperatorRegisterData } from "../../../types/operator";
+import logger from "../../../config/logger";
+import { IStaffRepository } from "../../../repositories/syaffRepository/interface/IStaffRepository";
+import { staffDataMapping } from "../../../utils/mapping/staffDto";
 
 @injectable()
 export class AuthService implements IAuthService {
+  private client: OAuth2Client;
 
-    private client: OAuth2Client
+  constructor(
+    @inject(TYPES.UserAuthRepository)
+    private _userRepository: IUserAuthRepository,
+    @inject(TYPES.OperatorAuthRepository)
+    private _operatorRepository: IOperatorAuthRepository,
+    @inject(TYPES.S3StorageService) private _storageService: IStorageService,
+    @inject(TYPES.EmailService) private _emailService: IEmailService,
+    @inject(TYPES.StaffRepository) private _staffRepository: IStaffRepository,
+  ) {
+    this.client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  }
 
-    constructor(
-        @inject(TYPES.UserAuthRepository)private _userRepository : IUserAuthRepository,
-        @inject(TYPES.OperatorAuthRepository)private _operatorRepository:IOperatorAuthRepository,
-        @inject(TYPES.S3StorageService) private _storageService: IStorageService,
-        @inject(TYPES.EmailService) private _emailService:IEmailService,
-        @inject(TYPES.StaffRepository) private _staffRepository : IStaffRepository
-    ){  
-        this.client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  async userRegister(data: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+  }) {
+    const { name, email, phone, password } = data;
+    const exist = await this._userRepository.findUserByEmail(email);
+
+    if (exist) {
+      throw new Error("User already exists");
     }
 
-    async userRegister(data:{name: string, email: string, phone: string, password: string}) {
-        const { name, email, phone, password } = data;
-        const exist = await this._userRepository.findUserByEmail(email)
+    const hashpassword = await bcrypt.hash(password, 10);
 
-        if(exist){
-            throw new Error("User already exists")
-        }
+    logger.info(`New user registered: ${email}`);
 
-        const hashpassword = await bcrypt.hash(password,10)
+    await this._userRepository.userRegister({
+      name,
+      email,
+      phone,
+      password: hashpassword,
+      role: "user",
+      isBlocked: false,
+      isVerified: true,
+    });
+  }
 
-        logger.info(`New user registered: ${email}`);
+  async userLogin(data: { email: string; password: string }) {
+    const { email, password } = data;
 
-        await this._userRepository.userRegister({
-            name,
-            email,
-            phone,
-            password:hashpassword,
-            role:'user',
-            isBlocked:false,
-            isVerified:true
-        })
+    const existUser = await this._userRepository.findUserByEmail(email);
+
+    if (!existUser) {
+      logger.warn(`User not found: ${email}`);
+      throw new Error("User Not Found");
     }
 
-    async userLogin(data: { email: string; password: string; }) {
-        const {email ,password} = data
-
-        const existUser = await this._userRepository.findUserByEmail(email)
-
-        if(!existUser){
-            logger.warn(`User not found: ${email}`);
-            throw new Error('User Not Found')
-        }
-
-        if(existUser.role === 'admin'){
-            throw new Error('User not found')
-        }
-
-        if(existUser.password === '' && existUser.googleId !== ''){
-            throw new Error('This account was created using google. Please continue with google sign-in')
-        }
-
-        const isMatch = await bcrypt.compare(password , existUser.password)
-
-        if(!isMatch){
-            logger.warn(`Wrong password: ${email}`);
-            throw new Error('Incorrect Password')
-        }
-
-        const accessToken = generateAccessToken(existUser._id.toString(), existUser.role)
-
-        const refreshToken = generateRefreshToken(existUser._id.toString() , existUser.role)
-
-        logger.info(`User logged in: ${email}`);
-      
-        return {
-            user: userDataMapping(existUser),
-            accessToken,
-            refreshToken
-        };
+    if (existUser.role === "admin") {
+      throw new Error("User not found");
     }
 
-    async operatorRegister(data: IOperatorRegisterData,files: {[fieldname: string]: Express.Multer.File[];}){
-
-        const exist = await this._operatorRepository.findOperatorByEmail(data.email)
-
-        if(exist){
-            throw new Error('Operator already exists')
-        }
-        const password = await bcrypt.hash(data.password,10)
-
-        const registrationCertificate = await this._storageService.uploadFile(
-            files.registrationCertificate[0],
-            "operators"
-        );
-
-        const taxCertificate = await this._storageService.uploadFile(
-            files.taxCertificate[0],
-            "operators"
-        );
-
-        const transportLicense = await this._storageService.uploadFile(
-            files.transportLicense[0],
-            "operators"
-        );
-             
-        await this._operatorRepository.operatorRegister({
-            ownerName: data.ownerName,
-            email: data.email,
-            phone: data.phone,
-            password: password,
-            role:'operator',
-            legalEntityName: data.legalEntityName,
-            gstNumber: data.gstNumber,
-            yearOfIncorporation: data.yearOfIncorporation,
-            panNumber: data.panNumber,
-            authorisedRepresentative: data.authorisedRepresentative,
-            registrationCertificate,
-            taxCertificate,
-            transportLicense,
-            status: "pending",
-            isBlocked: false,
-            rejectReason: null,
-            createdAt:new Date()
-        });
+    if (existUser.password === "" && existUser.googleId !== "") {
+      throw new Error(
+        "This account was created using google. Please continue with google sign-in",
+      );
     }
 
-    async operatorLogin(data: { email: string; password: string; }) {
-        const {email , password} = data
+    const isMatch = await bcrypt.compare(password, existUser.password);
 
-        const exist = await this._operatorRepository.findOperatorByEmail(email)
-
-        if(!exist){
-            throw new Error('User Not Found , Please Register')
-        }
-
-        const isMAtch = await bcrypt.compare(password,exist.password)
-
-        if(!isMAtch){
-            throw new Error('Password Incorrect')
-        }
-
-        if(exist.isBlocked){
-            throw new Error('operator account has been blocked ! please contact our support team')
-        }
-
-        const accessToken = generateAccessToken(exist._id.toString() ,exist.role)
-
-        const refreshToken = generateRefreshToken(exist._id.toString() ,exist.role)
-
-        return{
-            operator: operatorDataMapping(exist),
-            accessToken,
-            refreshToken
-        }
+    if (!isMatch) {
+      logger.warn(`Wrong password: ${email}`);
+      throw new Error("Incorrect Password");
     }
 
-    async AdminLogin(data: { email: string; password: string; }) {
-        const {email , password} = data
+    const accessToken = generateAccessToken(
+      existUser._id.toString(),
+      existUser.role,
+    );
 
-        const existAdmin = await this._userRepository.findUserByEmail(email)
+    const refreshToken = generateRefreshToken(
+      existUser._id.toString(),
+      existUser.role,
+    );
 
-        if(!existAdmin){
-            throw new Error('Admin Not Found')
-        }
+    logger.info(`User logged in: ${email}`);
 
-        if (existAdmin.role !== "admin") {
-            throw new Error("Access denied");
-        }
+    return {
+      user: userDataMapping(existUser),
+      accessToken,
+      refreshToken,
+    };
+  }
 
-        const isMAtch = await bcrypt.compare(password,existAdmin.password)
-        if(!isMAtch){
-            throw new Error('Incorrect Password')
-        }
+  async operatorRegister(
+    data: IOperatorRegisterData,
+    files: { [fieldname: string]: Express.Multer.File[] },
+  ) {
+    const exist = await this._operatorRepository.findOperatorByEmail(
+      data.email,
+    );
 
-        const accessToken = generateAccessToken(existAdmin._id.toString(),existAdmin.role);
+    if (exist) {
+      throw new Error("Operator already exists");
+    }
+    const password = await bcrypt.hash(data.password, 10);
 
-        const refreshToken = generateRefreshToken(existAdmin._id.toString(),existAdmin.role);
+    const registrationCertificate = await this._storageService.uploadFile(
+      files.registrationCertificate[0],
+      "operators",
+    );
 
-        return {
-            admin : userDataMapping(existAdmin),
-            accessToken,
-            refreshToken
-        };
+    const taxCertificate = await this._storageService.uploadFile(
+      files.taxCertificate[0],
+      "operators",
+    );
+
+    const transportLicense = await this._storageService.uploadFile(
+      files.transportLicense[0],
+      "operators",
+    );
+
+    await this._operatorRepository.operatorRegister({
+      ownerName: data.ownerName,
+      email: data.email,
+      phone: data.phone,
+      password: password,
+      role: "operator",
+      legalEntityName: data.legalEntityName,
+      gstNumber: data.gstNumber,
+      yearOfIncorporation: data.yearOfIncorporation,
+      panNumber: data.panNumber,
+      authorisedRepresentative: data.authorisedRepresentative,
+      registrationCertificate,
+      taxCertificate,
+      transportLicense,
+      status: "pending",
+      isBlocked: false,
+      rejectReason: null,
+      createdAt: new Date(),
+    });
+  }
+
+  async operatorLogin(data: { email: string; password: string }) {
+    const { email, password } = data;
+
+    const exist = await this._operatorRepository.findOperatorByEmail(email);
+
+    if (!exist) {
+      throw new Error("User Not Found , Please Register");
     }
 
-    async genrateOperatorOtp(data: { email: string })  {
-        const email = data.email
+    const isMAtch = await bcrypt.compare(password, exist.password);
 
-        const existOperator = await this._operatorRepository.findOperatorByEmail(email)
-
-        if(existOperator){
-            throw new Error('Operator Is Already Exist')
-        }
-
-        const  {otp , hashedOtp}  = generateOtp() 
-
-        const redisKey = `operatorRegisterOtp:${email}`
-
-        await redisclient.setEx(
-            redisKey,
-            120,
-            hashedOtp
-        )
-
-        await this._emailService.sendOtpEmail(email , otp)
-
-        return {success : true , operatorOtp:otp}
+    if (!isMAtch) {
+      throw new Error("Password Incorrect");
     }
 
-    async verifyOperatorOtp (data : {email : string , otp : string }) {
-
-        const {email , otp} = data
-
-        const redisKey = `operatorRegisterOtp:${email}`
-        const storedOtp = await redisclient.get(redisKey)
-
-        if(!storedOtp){
-            throw new Error('OTP Expired , Please Resent OTP')
-        }
-        
-        const hasedOperatorOtp = crypto.createHash('sha256').update(otp).digest('hex')
-
-        if(storedOtp !== hasedOperatorOtp){
-            throw new Error('Invalid OTP')
-        }
-
-        console.log('OTP VErified from the servce')
-        return {success : true , message : 'OTP Verified'}
+    if (exist.isBlocked) {
+      throw new Error(
+        "operator account has been blocked ! please contact our support team",
+      );
     }
 
-    
-   async userForgotPasswordEmailVerify(data: { email: string; }) {
-       const {email} = data
+    const accessToken = generateAccessToken(exist._id.toString(), exist.role);
 
-       const existUser = await this._userRepository.findUserByEmail(email)
+    const refreshToken = generateRefreshToken(exist._id.toString(), exist.role);
 
-       if(!existUser){
-        throw new Error('User Not Found')
-       }   
+    return {
+      operator: operatorDataMapping(exist),
+      accessToken,
+      refreshToken,
+    };
+  }
 
-       const {otp , hashedOtp} = generateOtp()
+  async AdminLogin(data: { email: string; password: string }) {
+    const { email, password } = data;
 
-       const redisKey = `forgotPassword:${email}`
+    const existAdmin = await this._userRepository.findUserByEmail(email);
 
-       await redisclient.setEx(
-        redisKey,
-        120,
-        hashedOtp
-       )
-
-       await this._emailService.sendOtpEmail(email,otp)
-
-       return {success:true,message : `otp sent to ${email} successfully`}
+    if (!existAdmin) {
+      throw new Error("Admin Not Found");
     }
 
-    async userVerifyForgotPasswordOtp(data: { email: string; otp: string; }) {
-        const {email , otp } = data
-
-        const redisKey = `forgotPassword:${email}`
-        const storedOtp = await redisclient.get(redisKey)
-
-        if(!storedOtp){
-            throw new Error('OTP Expired')
-        }
-      
-        // console.log('==-==-==-=',storedOtp)
-        const hashedUserOtp = crypto.createHash("sha256").update(otp).digest("hex");
-        // console.log('Completed the comparision')
-        // console.log('-------------------')
-       
-        if(hashedUserOtp !== storedOtp){
-            throw new Error('Invalid OTP')
-        }
-        console.log('Successed Verification OTP ')
-        return {success:true , message :"OTP Verified"}
-        
+    if (existAdmin.role !== "admin") {
+      throw new Error("Access denied");
     }
 
-    async userResetPassword(data: { email: string; password: string; })  {
-        const {email , password} = data
-
-        const existUser = await this._userRepository.findUserByEmail(email)
-        const hashpassword = await bcrypt.hash(password,10)
-
-        if(!existUser){
-            throw new Error('User Not Found')
-        }
-
-        await this._userRepository.updateUser(email,{password:hashpassword})
-
-        return {success:true , message : 'Password Changed Successfuly'}
+    const isMAtch = await bcrypt.compare(password, existAdmin.password);
+    if (!isMAtch) {
+      throw new Error("Incorrect Password");
     }
 
+    const accessToken = generateAccessToken(
+      existAdmin._id.toString(),
+      existAdmin.role,
+    );
 
+    const refreshToken = generateRefreshToken(
+      existAdmin._id.toString(),
+      existAdmin.role,
+    );
 
+    return {
+      admin: userDataMapping(existAdmin),
+      accessToken,
+      refreshToken,
+    };
+  }
 
-    async googleLogin(data: { credential: string }) {
+  async genrateOperatorOtp(data: { email: string }) {
+    const email = data.email;
 
-        const { credential } = data;
+    const existOperator =
+      await this._operatorRepository.findOperatorByEmail(email);
 
-        const ticket = await this.client.verifyIdToken({
-            idToken: credential,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        });
-
-        const payload = ticket.getPayload();
-
-        if (!payload) {
-            throw new Error("Google authentication failed");
-        }
-
-        const {sub,name,email,} = payload;
-
-        if (!email) {
-            throw new Error("Email not found");
-        }
-
-        let existUser = await this._userRepository.findUserByEmail(email);
-
-        if (!existUser) {
-            existUser = await this._userRepository.createGoogleUser({
-
-                name: name || "",
-                email,
-                phone: "",
-                password: "",
-                googleId: sub,
-                role: "user",
-                isBlocked: false,
-                isVerified: true,
-            });
-        }
-
-        const accessToken = generateAccessToken(existUser._id.toString(),existUser.role);
-
-        const refreshToken = generateRefreshToken(existUser._id.toString(),existUser.role);
-
-        return {
-            user: userDataMapping(existUser),
-            accessToken,
-            refreshToken
-        }
+    if (existOperator) {
+      throw new Error("Operator Is Already Exist");
     }
 
-    async userRefreshToken(refrehToken: string) {
+    const { otp, hashedOtp } = generateOtp();
 
-        const decoded = verifyRefreshToken(refrehToken)
+    const redisKey = `operatorRegisterOtp:${email}`;
 
-        if(!decoded){
-            throw new Error ('Invalid or expired refrsh token')
-        }
+    await redisclient.setEx(redisKey, 120, hashedOtp);
 
-        if(decoded.role !== 'user'){
-            throw new Error ('Invalid Refresh Token')
-        }
+    await this._emailService.sendOtpEmail(email, otp);
 
-        const user = await this._userRepository.findUserById(decoded.id)
+    return { success: true, operatorOtp: otp };
+  }
 
-        if(!user){
-            throw new Error('User Not Found')
-        }
+  async verifyOperatorOtp(data: { email: string; otp: string }) {
+    const { email, otp } = data;
 
-        if(user.isBlocked){
-            throw new Error('User Is Blocked')
-        }
+    const redisKey = `operatorRegisterOtp:${email}`;
+    const storedOtp = await redisclient.get(redisKey);
 
-        const accessToken = generateAccessToken(decoded.id , decoded.role)
-
-        return {
-            accessToken
-        }
-        
+    if (!storedOtp) {
+      throw new Error("OTP Expired , Please Resent OTP");
     }
 
-    async adminRefreshToken(refreshToken: string) {
-        
-        const decoded = verifyRefreshToken(refreshToken)
+    const hasedOperatorOtp = crypto
+      .createHash("sha256")
+      .update(otp)
+      .digest("hex");
 
-        if(!decoded){
-            throw new Error('Invalid Or Expired Refresh Token')
-        }
-
-        if(decoded.role !== 'admin'){
-            throw new Error ('Invalid Refresh Token')
-        }
-
-        const admin = await this._userRepository.findUserById(decoded.id)
-
-        if(!admin){
-            throw new Error ('Admin Not Found')
-        }
-
-        if(admin.isBlocked){
-            throw new Error ('Admin is blocked')
-        }
-        const accessToken = generateAccessToken(decoded.id , decoded.role)
-
-        return {accessToken}
+    if (storedOtp !== hasedOperatorOtp) {
+      throw new Error("Invalid OTP");
     }
 
-    async operatorRefreshToken(refreshToken: string) {
-        
-        const decode = verifyRefreshToken(refreshToken)
+    console.log("OTP VErified from the servce");
+    return { success: true, message: "OTP Verified" };
+  }
 
-        if(!decode){
-            throw new Error('Innalid Refresh Token')
-        }
+  async userForgotPasswordEmailVerify(data: { email: string }) {
+    const { email } = data;
 
-        if(decode.role !== 'operator'){
-            throw new Error ('Invalid Token')
-        }
+    const existUser = await this._userRepository.findUserByEmail(email);
 
-        const operator = await this._operatorRepository.findOperatorById(decode.id)
-
-        if(!operator){
-            throw new Error ('Operator Not Found')
-        }
-
-        const accessToken = generateAccessToken(operator.id , operator.role)
-
-        return {accessToken}
+    if (!existUser) {
+      throw new Error("User Not Found");
     }
 
-    async staffRefreshToken(refreshToken: string) {
+    const { otp, hashedOtp } = generateOtp();
 
-        const decode = verifyRefreshToken(refreshToken)
+    const redisKey = `forgotPassword:${email}`;
 
-        if(!decode){
-            throw new Error('Innalid Refresh Token')
-        }
+    await redisclient.setEx(redisKey, 120, hashedOtp);
 
-        if(decode.role !== 'staff'){
-            throw new Error ('Invalid Token')
-        }
+    await this._emailService.sendOtpEmail(email, otp);
 
-        const staff = await this._staffRepository.findStaffById(decode.id)
+    return { success: true, message: `otp sent to ${email} successfully` };
+  }
 
-        if(!staff){
-            throw new Error ('Staff Not Found')
-        }
+  async userVerifyForgotPasswordOtp(data: { email: string; otp: string }) {
+    const { email, otp } = data;
 
-        const accessToken = generateAccessToken(staff.id.toString() , 'staff')
+    const redisKey = `forgotPassword:${email}`;
+    const storedOtp = await redisclient.get(redisKey);
 
-        return {accessToken}
+    if (!storedOtp) {
+      throw new Error("OTP Expired");
     }
 
-    async staffLogin(data: { email: string; password: string; }) {
-        
-        const {email , password} = data
+    // console.log('==-==-==-=',storedOtp)
+    const hashedUserOtp = crypto.createHash("sha256").update(otp).digest("hex");
+    // console.log('Completed the comparision')
+    // console.log('-------------------')
 
-        const existStaff = await this._staffRepository.findStaffByEmail(email)
+    if (hashedUserOtp !== storedOtp) {
+      throw new Error("Invalid OTP");
+    }
+    console.log("Successed Verification OTP ");
+    return { success: true, message: "OTP Verified" };
+  }
 
-        if(!existStaff){
-            throw new Error('Staff Not Found')
-        }
+  async userResetPassword(data: { email: string; password: string }) {
+    const { email, password } = data;
 
-        const passwordMach = await bcrypt.compare(password,existStaff.password)
+    const existUser = await this._userRepository.findUserByEmail(email);
+    const hashpassword = await bcrypt.hash(password, 10);
 
-        if(!passwordMach){
-            throw new Error('Password Not Correct')
-        }
-
-        const accessToken = generateAccessToken(existStaff._id.toString(),'staff')
-
-        const refreshToken = generateRefreshToken(existStaff._id.toString() , 'staff')
-
-        return {
-            staff : staffDataMapping(existStaff),
-            accessToken,
-            refreshToken
-        }
+    if (!existUser) {
+      throw new Error("User Not Found");
     }
 
+    await this._userRepository.updateUser(email, { password: hashpassword });
 
-    async generateUserRegistrationOtp (data: { email: string; })  {
-        
-        const {email} = data
+    return { success: true, message: "Password Changed Successfuly" };
+  }
 
-        const existUser = await this._userRepository.findUserByEmail(email)
+  async googleLogin(data: { credential: string }) {
+    const { credential } = data;
 
-        if(existUser){
-            throw new Error ('User Already Exist')
-        }
+    const ticket = await this.client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
 
-        const {otp , hashedOtp} = generateOtp()
+    const payload = ticket.getPayload();
 
-        const redistKey = `userRegisterationOtp:${email}`
-
-        await redisclient.setEx(
-            redistKey,
-            120,
-            hashedOtp
-        )
-
-        await this._emailService.sendOtpEmail(email,otp)
-
-        return {success:true , message : `Otp Sent to ${email}`}
+    if (!payload) {
+      throw new Error("Google authentication failed");
     }
 
-    async verifyUserRegistrationOtp (data : {email : string , otp : string}) {
+    const { sub, name, email } = payload;
 
-        const {email , otp} = data
-
-        console.log('Email & otp from auth Service' , email , otp)
-
-        const redistKey = `userRegisterationOtp:${email}` 
-
-        const storedOtp = await redisclient.get(redistKey)
-
-        if(!storedOtp){
-            throw new Error('Otp Invalid')
-        }
-
-        const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex')
-
-        if(storedOtp !== hashedOtp){
-            throw new Error('Invalid OTP')
-        }
-
-        console.log('Opt Verified auth service User')
-
-        return {success : true , message : 'OTP verified'}
+    if (!email) {
+      throw new Error("Email not found");
     }
 
+    let existUser = await this._userRepository.findUserByEmail(email);
+
+    if (!existUser) {
+      existUser = await this._userRepository.createGoogleUser({
+        name: name || "",
+        email,
+        phone: "",
+        password: "",
+        googleId: sub,
+        role: "user",
+        isBlocked: false,
+        isVerified: true,
+      });
+    }
+
+    const accessToken = generateAccessToken(
+      existUser._id.toString(),
+      existUser.role,
+    );
+
+    const refreshToken = generateRefreshToken(
+      existUser._id.toString(),
+      existUser.role,
+    );
+
+    return {
+      user: userDataMapping(existUser),
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async userRefreshToken(refrehToken: string) {
+    const decoded = verifyRefreshToken(refrehToken);
+
+    if (!decoded) {
+      throw new Error("Invalid or expired refrsh token");
+    }
+
+    if (decoded.role !== "user") {
+      throw new Error("Invalid Refresh Token");
+    }
+
+    const user = await this._userRepository.findUserById(decoded.id);
+
+    if (!user) {
+      throw new Error("User Not Found");
+    }
+
+    if (user.isBlocked) {
+      throw new Error("User Is Blocked");
+    }
+
+    const accessToken = generateAccessToken(decoded.id, decoded.role);
+
+    return {
+      accessToken,
+    };
+  }
+
+  async adminRefreshToken(refreshToken: string) {
+    const decoded = verifyRefreshToken(refreshToken);
+
+    if (!decoded) {
+      throw new Error("Invalid Or Expired Refresh Token");
+    }
+
+    if (decoded.role !== "admin") {
+      throw new Error("Invalid Refresh Token");
+    }
+
+    const admin = await this._userRepository.findUserById(decoded.id);
+
+    if (!admin) {
+      throw new Error("Admin Not Found");
+    }
+
+    if (admin.isBlocked) {
+      throw new Error("Admin is blocked");
+    }
+    const accessToken = generateAccessToken(decoded.id, decoded.role);
+
+    return { accessToken };
+  }
+
+  async operatorRefreshToken(refreshToken: string) {
+    const decode = verifyRefreshToken(refreshToken);
+
+    if (!decode) {
+      throw new Error("Innalid Refresh Token");
+    }
+
+    if (decode.role !== "operator") {
+      throw new Error("Invalid Token");
+    }
+
+    const operator = await this._operatorRepository.findOperatorById(decode.id);
+
+    if (!operator) {
+      throw new Error("Operator Not Found");
+    }
+
+    const accessToken = generateAccessToken(operator.id, operator.role);
+
+    return { accessToken };
+  }
+
+  async staffRefreshToken(refreshToken: string) {
+    const decode = verifyRefreshToken(refreshToken);
+
+    if (!decode) {
+      throw new Error("Innalid Refresh Token");
+    }
+
+    if (decode.role !== "staff") {
+      throw new Error("Invalid Token");
+    }
+
+    const staff = await this._staffRepository.findStaffById(decode.id);
+
+    if (!staff) {
+      throw new Error("Staff Not Found");
+    }
+
+    const accessToken = generateAccessToken(staff.id.toString(), "staff");
+
+    return { accessToken };
+  }
+
+  async staffLogin(data: { email: string; password: string }) {
+    const { email, password } = data;
+
+    const existStaff = await this._staffRepository.findStaffByEmail(email);
+
+    if (!existStaff) {
+      throw new Error("Staff Not Found");
+    }
+
+    const passwordMach = await bcrypt.compare(password, existStaff.password);
+
+    if (!passwordMach) {
+      throw new Error("Password Not Correct");
+    }
+
+    const accessToken = generateAccessToken(existStaff._id.toString(), "staff");
+
+    const refreshToken = generateRefreshToken(
+      existStaff._id.toString(),
+      "staff",
+    );
+
+    return {
+      staff: staffDataMapping(existStaff),
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async generateUserRegistrationOtp(data: { email: string }) {
+    const { email } = data;
+
+    const existUser = await this._userRepository.findUserByEmail(email);
+
+    if (existUser) {
+      throw new Error("User Already Exist");
+    }
+
+    const { otp, hashedOtp } = generateOtp();
+
+    const redistKey = `userRegisterationOtp:${email}`;
+
+    await redisclient.setEx(redistKey, 120, hashedOtp);
+
+    await this._emailService.sendOtpEmail(email, otp);
+
+    return { success: true, message: `Otp Sent to ${email}` };
+  }
+
+  async verifyUserRegistrationOtp(data: { email: string; otp: string }) {
+    const { email, otp } = data;
+
+    console.log("Email & otp from auth Service", email, otp);
+
+    const redistKey = `userRegisterationOtp:${email}`;
+
+    const storedOtp = await redisclient.get(redistKey);
+
+    if (!storedOtp) {
+      throw new Error("Otp Invalid");
+    }
+
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+
+    if (storedOtp !== hashedOtp) {
+      throw new Error("Invalid OTP");
+    }
+
+    console.log("Opt Verified auth service User");
+
+    return { success: true, message: "OTP verified" };
+  }
 }

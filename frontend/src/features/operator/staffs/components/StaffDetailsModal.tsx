@@ -153,7 +153,6 @@ const StaffDetailsModal = ({ open, staff, onClose }: StaffDetailsModalProps) => 
   );
 };
 
-/* ---------- Small presentational helpers ---------- */
 
 const DetailRow = ({
   icon: Icon,

@@ -20,7 +20,6 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import logo from "../../../../public/logo.png";
 import OperatorNavbar from "@/components/layouts/operator/OperatorNavbar";
-// operatorResubmit is a placeholder name: point it to your real resubmit API
 import { operatorResubmit } from "../service/operatorService";
 import { useDispatch } from "react-redux";
 import { updateOperatorStatus } from "@/redux/slice/operatorAuthSlice";

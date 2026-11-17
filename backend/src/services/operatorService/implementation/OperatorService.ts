@@ -1,82 +1,75 @@
-
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "../../../DI/types";
 import { IOperatorService } from "../interface/IOperatorService";
 import { IOperatorRepository } from "../../../repositories/Operator/interface/IOperatorRepository";
 import { IStorageService } from "../../storage/interfaces/IStorageService";
-import {
-    IOperator,
-    IOperatorResubmitData,
-} from "../../../types/operator";
+import { IOperator, IOperatorResubmitData } from "../../../types/operator";
 
 const documentKeys = [
-    "registrationCertificate",
-    "taxCertificate",
-    "transportLicense",
+  "registrationCertificate",
+  "taxCertificate",
+  "transportLicense",
 ] as const;
 
 @injectable()
 export class OperatorService implements IOperatorService {
-    constructor(
-        @inject(TYPES.OperatorRepository)
-        private _operatorRepository: IOperatorRepository,
+  constructor(
+    @inject(TYPES.OperatorRepository)
+    private _operatorRepository: IOperatorRepository,
 
-        @inject(TYPES.S3StorageService)
-        private _s3Service: IStorageService
-    ) {}
+    @inject(TYPES.S3StorageService)
+    private _s3Service: IStorageService,
+  ) {}
 
-    async resubmitOperator(
-        operatorId: string,
-        data: IOperatorResubmitData,
-        files: { [fieldname: string]: Express.Multer.File[] }
-    ): Promise<IOperator> {
+  async resubmitOperator(
+    operatorId: string,
+    data: IOperatorResubmitData,
+    files: { [fieldname: string]: Express.Multer.File[] },
+  ): Promise<IOperator> {
+    const operator =
+      await this._operatorRepository.findOperatorById(operatorId);
 
-        
-        const operator = await this._operatorRepository.findOperatorById(operatorId);
+    console.log("Operator in Service", operator);
 
-        if (!operator) {
-            throw new Error("Operator not found");
-        }
-
-       
-        if (operator.status !== "rejected") {
-            throw new Error(
-                "Only rejected registrations can be resubmitted"
-            );
-        }
-
-         
-        const updateData: Partial<IOperator> = {
-            ...data,
-            status: "pending",
-            rejectReason : null
-        };
-
-         
-        for (const key of documentKeys) {
-            const file = files?.[key]?.[0];
-
-            if (file) {
-                updateData[key] = await this._s3Service.uploadFile(
-                    file,
-                    "operator-documents"
-                );
-            }
-        }
-
-     
-        const updatedOperator =
-            await this._operatorRepository.resubmitOperator(
-                operatorId,
-                updateData
-            );
-
-        if (!updatedOperator) {
-            throw new Error("Failed to resubmit operator details");
-        }
-
-         
-        return updatedOperator;
+    if (!operator) {
+      throw new Error("Operator not found");
     }
+
+    if (operator.status !== "rejected") {
+      throw new Error("Only rejected registrations can be resubmitted");
+    }
+
+    console.log("1111111111111");
+
+    const updateData: Partial<IOperator> = {
+      ...data,
+      status: "pending",
+      rejectReason: null,
+    };
+
+    for (const key of documentKeys) {
+      const file = files?.[key]?.[0];
+
+      if (file) {
+        updateData[key] = await this._s3Service.uploadFile(
+          file,
+          "operator-documents",
+        );
+      }
+    }
+
+    console.log("222222222222222222222");
+
+    const updatedOperator = await this._operatorRepository.resubmitOperator(
+      operatorId,
+      updateData,
+    );
+
+    if (!updatedOperator) {
+      throw new Error("Failed to resubmit operator details");
+    }
+
+    return updatedOperator;
+  }
 }

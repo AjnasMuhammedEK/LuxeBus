@@ -5,6 +5,7 @@ import {
   Bus,
   UserCircle,
   LogOut,
+  PlaneTakeoff
 } from "lucide-react";
 import logo from "../../../../public/logo.png";
 import { logoutAdmin } from "@/redux/slice/adminAuthSlice";
@@ -19,7 +20,8 @@ interface SidebarLinkItem {
 
 const mainLinks: SidebarLinkItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Travel Operators", href: "/admin/operators", icon: Bus },
+  { label: "Travel Operators", href: "/admin/operators", icon: PlaneTakeoff },
+  { label: "Buses", href: "/admin/buses", icon: Bus },
   // { label: "Bookings", href: "/admin/bookings", icon: Ticket },
   // { label: "Users", href: "/admin/users", icon: Users },
   // { label: "Reports", href: "/admin/reports", icon: FileBarChart2 },

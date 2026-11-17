@@ -8,6 +8,7 @@ import Home from '@/features/operator/home/Home'
 import ProtectedRoute from "@/routes/ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 import StaffManagement from "@/features/operator/staffs/pages/StaffManagement";
+import FleetManagement from "@/features/operator/fleet/pages/FleetManagement";
 // import { seatTestData } from "@/constants/seatTestData";
  
  
@@ -27,6 +28,7 @@ const OperatorRoutes = () => {
             <Route  element={<OperatorLayout />}>
                 <Route path="home" element={<Home/>}/>
                 <Route path="staff" element={<StaffManagement/>}/>
+                <Route path="fleet" element={<FleetManagement/>}/>
                 
             </Route>
             </Route>

@@ -5,13 +5,18 @@ import {
   FileText,
   ShieldCheck,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import SeatLayoutPreview from "./SeatLayoutPreview";
 import ResubmitBusModal from "./ResubmitBusModal";
 
-import { getSignedDocmunetUrl } from "@/features/operator/fleet/service/busService";
+import {
+  getSignedDocmunetUrl,
+  deleteBus,
+} from "@/features/operator/fleet/service/busService";
+
 import type { IBus } from "@/types/fleet.types";
 
 interface BusDetailsModalProps {
@@ -30,7 +35,9 @@ const BusDetailsModal = ({
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [isDocumentLoading, setIsDocumentLoading] = useState(false);
   const [resubmitOpen, setResubmitOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
+  // View uploaded document
   const handleDocumentView = async (objectKey?: string | null) => {
     if (!objectKey) return;
 
@@ -46,6 +53,84 @@ const BusDetailsModal = ({
     } finally {
       setIsDocumentLoading(false);
     }
+  };
+
+  // Delete bus confirmation using React Hot Toast
+  const handleDeleteBus = () => {
+    if (!bus || isDeleting) return;
+
+    const selectedBus = bus;
+
+    toast.custom(
+      (t) => (
+        <div className="w-[350px] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+              <Trash2 className="h-5 w-5 text-red-600" />
+            </div>
+
+            <div>
+              <h3 className="font-bold text-slate-900">
+                Delete Bus?
+              </h3>
+
+              <p className="text-xs text-slate-500">
+                {selectedBus.registrationNumber}
+              </p>
+            </div>
+          </div>
+
+          {/* Message */}
+          <p className="mt-3 text-sm leading-5 text-slate-600">
+            Are you sure you want to delete this bus?
+            This action cannot be undone.
+          </p>
+
+          {/* Actions */}
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => toast.dismiss(t.id)}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                toast.dismiss(t.id);
+
+                try {
+                  setIsDeleting(true);
+
+                  await deleteBus(selectedBus._id);
+
+                  toast.success("Bus deleted successfully");
+
+                  onUpdated();
+                } catch (error) {
+                  console.error("Failed to delete bus:", error);
+
+                  toast.error("Unable to delete bus. Please try again.");
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+            >
+              <Trash2 className="h-4 w-4" />
+              Yes, Delete
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: Infinity,
+        position: "top-center",
+      },
+    );
   };
 
   if (!open || !bus) return null;
@@ -102,7 +187,8 @@ const BusDetailsModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              disabled={isDeleting}
+              className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -205,24 +291,36 @@ const BusDetailsModal = ({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-between border-t border-slate-200 px-6 py-5 sm:px-7">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-6 py-5 sm:px-7">
 
-            {bus.approvalStatus === "REJECTED" ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {bus.approvalStatus === "REJECTED" && (
+                <button
+                  type="button"
+                  onClick={() => setResubmitOpen(true)}
+                  disabled={isDeleting}
+                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Resubmit Bus
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => setResubmitOpen(true)}
-                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                onClick={handleDeleteBus}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Resubmit Bus
+                <Trash2 className="h-4 w-4" />
+                {isDeleting ? "Deleting..." : "Delete Bus"}
               </button>
-            ) : (
-              <div />
-            )}
+            </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+              disabled={isDeleting}
+              className="rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
             >
               Close
             </button>
@@ -258,7 +356,7 @@ const BusDetailsModal = ({
         )}
       </div>
 
-      {/* Resubmit Bus Modal */}
+      
       <ResubmitBusModal
         open={resubmitOpen}
         bus={bus}

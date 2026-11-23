@@ -1,4 +1,9 @@
-import { BusApprovalStatus, IAdminBusListResponse, IBus, IBusQueryParams } from "../../../types/bus";
+import {
+  BusApprovalStatus,
+  IAdminBusListResponse,
+  IBus,
+  IBusQueryParams,
+} from "../../../types/bus";
 import { IOperator } from "../../../types/operator";
 import { IOperatorMappedData } from "../../../types/operator";
 
@@ -40,4 +45,5 @@ export interface IAdminService {
     approvalStatus: BusApprovalStatus,
     rejectReason?: string,
   ): Promise<IBus>;
+  updateBusActiveStatus(busId: string, isActive: boolean): Promise<IBus>;
 }

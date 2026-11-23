@@ -45,7 +45,7 @@ export class AuthController implements IAuthController {
         httpOnly: true,
         secure: false,
         sameSite: "strict",
-        maxAge: 30 * 60 * 1000,
+        maxAge:  Number(process.env.REFRESH_TOKEN_MAX_AGE)
       });
 
       res.status(HttpStatus.OK).json(
@@ -116,7 +116,7 @@ export class AuthController implements IAuthController {
         httpOnly: true,
         secure: false,
         sameSite: "strict",
-        maxAge: 30 * 60 * 1000,
+        maxAge:  Number(process.env.REFRESH_TOKEN_MAX_AGE),
       });
 
       res.status(HttpStatus.OK).json(
@@ -218,7 +218,7 @@ export class AuthController implements IAuthController {
         httpOnly: true,
         secure: false,
         sameSite: "strict",
-        maxAge: 30 * 60 * 1000,
+        maxAge:  Number(process.env.REFRESH_TOKEN_MAX_AGE),
       });
 
       res.status(HttpStatus.OK).json(

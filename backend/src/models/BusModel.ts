@@ -1,8 +1,4 @@
-
-import mongoose, {
-  Schema,
-  HydratedDocument,
-} from "mongoose";
+import mongoose, { Schema, HydratedDocument } from "mongoose";
 
 import type { IBus } from "../types/bus";
 
@@ -26,12 +22,7 @@ const seatLayoutSnapshotSchema = new Schema(
 
     busType: {
       type: String,
-      enum: [
-        "SEATER",
-        "SLEEPER",
-        "SEATER_CUM_SLEEPER",
-        "HYBRID",
-      ],
+      enum: ["SEATER", "SLEEPER", "SEATER_CUM_SLEEPER", "HYBRID"],
       required: true,
     },
 
@@ -58,9 +49,8 @@ const seatLayoutSnapshotSchema = new Schema(
   },
   {
     _id: false,
-  }
+  },
 );
-
 
 const busSchema = new Schema<IBus>(
   {
@@ -97,12 +87,7 @@ const busSchema = new Schema<IBus>(
 
     busType: {
       type: String,
-      enum: [
-        "SEATER",
-        "SLEEPER",
-        "SEATER_CUM_SLEEPER",
-        "HYBRID",
-      ],
+      enum: ["SEATER", "SLEEPER", "SEATER_CUM_SLEEPER", "HYBRID"],
       required: true,
     },
 
@@ -161,6 +146,11 @@ const busSchema = new Schema<IBus>(
       default: true,
     },
 
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
     rejectReason: {
       type: String,
       default: null,
@@ -168,13 +158,10 @@ const busSchema = new Schema<IBus>(
   },
   {
     timestamps: true,
-  }
+  },
 );
- 
-busSchema.index(
-  { registrationNumber: 1 },
-  { unique: true }
-);
+
+busSchema.index({ registrationNumber: 1 }, { unique: true });
 
 export const Bus = mongoose.model<IBus>("Bus", busSchema);
 

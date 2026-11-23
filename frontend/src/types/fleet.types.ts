@@ -101,6 +101,7 @@ export interface IBus {
   documents: IBusDocuments;
   approvalStatus: BusApprovalStatus;
   isActive: boolean;
+  isDeleted: boolean;
   rejectReason?: string | null;
   createdAt?: string;
   updatedAt?: string;

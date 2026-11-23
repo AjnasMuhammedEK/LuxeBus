@@ -1,4 +1,3 @@
-
 export const TYPES = {
   UserAuthRepository: Symbol.for("UserAuthRepository"),
   OperatorAuthRepository: Symbol.for("OperatorAuthRepository"),
@@ -20,6 +19,11 @@ export const TYPES = {
   SeatLayoutController : Symbol.for('SeatLayoutController'),
   BusRepository : Symbol.for('BusRepository'),
   BusService : Symbol.for('BusService'),
-  BusController : Symbol.for('BusController')
- 
+  BusController : Symbol.for('BusController'),
+  UserRepository:Symbol.for('UserRepository'),
+  UserService : Symbol.for('UserService'),
+  UserController : Symbol.for("UserController"),
+  RouteRepository : Symbol.for('RouteRepository'),
+  RouteService:Symbol.for('RouteService'),
+  RouteController:Symbol.for('RouteController')
 };

@@ -29,4 +29,10 @@ export interface IAdminController {
     res: Response,
     next: NextFunction,
   ): Promise<void>;
+
+  updateBusActiveStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void>;
 }

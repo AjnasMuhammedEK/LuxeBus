@@ -204,4 +204,44 @@ export class BusController implements IBusController {
       next(error);
     }
   };
+
+  deleteBus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const operatorId = req.user?.id;
+    const { busId } = req.params;
+
+    if (!operatorId) {
+      res
+        .status(HttpStatus.UNAUTHORIZED)
+        .json(createResponse(false, "Unauthorized", null));
+
+      return;
+    }
+
+    if (typeof busId !== "string"||!Types.ObjectId.isValid(busId)) {
+      throw new Error("Invalid bus ID");
+    }
+
+    const deletedBus = await this._busService.deleteBus(
+      operatorId,
+      busId,
+    );
+
+    res
+      .status(HttpStatus.OK)
+      .json(
+        createResponse(
+          true,
+          "Bus deleted successfully",
+          deletedBus,
+        ),
+      );
+  } catch (error) {
+    next(error);
+  }
+};
 }

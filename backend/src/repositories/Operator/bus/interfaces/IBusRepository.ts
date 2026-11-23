@@ -26,9 +26,13 @@ export interface IBusRepository {
   ): Promise<IBus | null>;
 
   resubmitBus(
+    busId: string,
+    operatorId: string,
+    data: Partial<IBus>,
+  ): Promise<IBus | null>;
+  updateBusActiveStatus(busId: string, isActive: boolean): Promise<IBus | null>;
+  deleteBus(
   busId: string,
-  operatorId: string,
-  data: Partial<IBus>
+  operatorId: string
 ): Promise<IBus | null>;
-
 }

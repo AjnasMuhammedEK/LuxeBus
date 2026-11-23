@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Menu, X } from "lucide-react";
+import { Bell, Menu, X, UserCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import logo from "../../../../public/logo.png";
@@ -80,7 +80,14 @@ const PassengerNavbar = () => {
 
           {user ? (
             <div className="flex items-center gap-4">
-              <span className="font-semibold text-gray-800">Hi, {user.name}</span>
+              <Link
+                to="/profile"
+                title="My Profile"
+                className="flex items-center gap-2 font-semibold text-gray-800 transition hover:text-emerald-700"
+              >
+                <UserCircle className="h-7 w-7" />
+                <span>Hi, {user.name}</span>
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -152,7 +159,14 @@ const PassengerNavbar = () => {
         <div className="border-t p-5 space-y-3">
           {user ? (
             <>
-              <p className="px-2 font-semibold text-gray-800">Hi, {user.name}</p>
+              <Link
+                to="/profile"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-2 py-2 font-semibold text-gray-800 hover:bg-gray-100"
+              >
+                <UserCircle className="h-6 w-6" />
+                Hi, {user.name}
+              </Link>
               <button
                 type="button"
                 onClick={() => {

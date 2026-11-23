@@ -31,104 +31,99 @@ export class BusRepository
     return await this.findOne({ registrationNumber });
   }
 
-async getBuses(
-  operatorId: string,
-  query: IBusQueryParams,
-): Promise<IBusListResponse> {
-  const { page, limit, search, sortBy, sortOrder, approvalStatus } = query;
+  async getBuses(
+    operatorId: string,
+    query: IBusQueryParams,
+  ): Promise<IBusListResponse> {
+    const { page, limit, search, sortBy, sortOrder, approvalStatus } = query;
 
-  const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-  // Base filter: all buses belonging to this operator
-  const baseFilter: QueryFilter<IBus> = { operatorId };
+    const baseFilter: QueryFilter<IBus> = {
+      operatorId,
+      isDeleted: { $ne: true },
+    };
 
-  // Filter for the current table
-  const filter: QueryFilter<IBus> = { ...baseFilter };
+    const filter: QueryFilter<IBus> = { ...baseFilter };
 
-  if (search) {
-    const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (search) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    filter.$or = [
-      {
-        registrationNumber: {
-          $regex: escapedSearch,
-          $options: "i",
+      filter.$or = [
+        {
+          registrationNumber: {
+            $regex: escapedSearch,
+            $options: "i",
+          },
         },
-      },
-      {
-        manufacturer: {
-          $regex: escapedSearch,
-          $options: "i",
+        {
+          manufacturer: {
+            $regex: escapedSearch,
+            $options: "i",
+          },
         },
-      },
-      {
-        model: {
-          $regex: escapedSearch,
-          $options: "i",
+        {
+          model: {
+            $regex: escapedSearch,
+            $options: "i",
+          },
         },
+      ];
+    }
+
+    if (approvalStatus) {
+      filter.approvalStatus = approvalStatus;
+    }
+
+    const sortDirection = sortOrder === "asc" ? 1 : -1;
+
+    const sort: Record<string, 1 | -1> = {
+      [sortBy]: sortDirection,
+    };
+
+    // Fetch buses and calculate statistics
+    const [buses, totalItems, total, approved, pending, rejected] =
+      await Promise.all([
+        this.model.find(filter).sort(sort).skip(skip).limit(limit),
+
+        this.model.countDocuments(filter),
+
+        this.model.countDocuments(baseFilter),
+
+        this.model.countDocuments({
+          ...baseFilter,
+          approvalStatus: "APPROVED",
+        }),
+
+        this.model.countDocuments({
+          ...baseFilter,
+          approvalStatus: "PENDING",
+        }),
+
+        this.model.countDocuments({
+          ...baseFilter,
+          approvalStatus: "REJECTED",
+        }),
+      ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      buses,
+      stats: {
+        total,
+        approved,
+        pending,
+        rejected,
       },
-    ];
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages,
+      },
+    };
   }
-
-  if (approvalStatus) {
-    filter.approvalStatus = approvalStatus;
-  }
-
-  const sortDirection = sortOrder === "asc" ? 1 : -1;
-
-  const sort: Record<string, 1 | -1> = {
-    [sortBy]: sortDirection,
-  };
-
-  // Fetch buses and calculate statistics
-  const [
-    buses,
-    totalItems,
-    total,
-    approved,
-    pending,
-    rejected,
-  ] = await Promise.all([
-    this.model.find(filter).sort(sort).skip(skip).limit(limit),
-
-    this.model.countDocuments(filter),
-
-    this.model.countDocuments(baseFilter),
-
-    this.model.countDocuments({
-      ...baseFilter,
-      approvalStatus: "APPROVED",
-    }),
-
-    this.model.countDocuments({
-      ...baseFilter,
-      approvalStatus: "PENDING",
-    }),
-
-    this.model.countDocuments({
-      ...baseFilter,
-      approvalStatus: "REJECTED",
-    }),
-  ]);
-
-  const totalPages = Math.ceil(totalItems / limit);
-
-  return {
-    buses,
-    stats: {
-      total,
-      approved,
-      pending,
-      rejected,
-    },
-    pagination: {
-      page,
-      limit,
-      totalItems,
-      totalPages,
-    },
-  };
-}
 
   async getAdminBuses(query: IBusQueryParams): Promise<IAdminBusListResponse> {
     const { page, limit, search, sortBy, sortOrder, approvalStatus } = query;
@@ -248,9 +243,36 @@ async getBuses(
         operatorId: new Types.ObjectId(operatorId),
         approvalStatus: "REJECTED",
         isActive: true,
+        isDeleted: { $ne: true },
       },
       {
         $set: data,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+  }
+
+  async updateBusActiveStatus(
+    busId: string,
+    isActive: boolean,
+  ): Promise<IBus | null> {
+    return await this.updateById(busId, { isActive });
+  }
+
+  async deleteBus(busId: string, operatorId: string): Promise<IBus | null> {
+    return await this.model.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(busId),
+        operatorId: new Types.ObjectId(operatorId),
+        isDeleted: { $ne: true },
+      },
+      {
+        $set: {
+          isDeleted: true,
+        },
       },
       {
         new: true,

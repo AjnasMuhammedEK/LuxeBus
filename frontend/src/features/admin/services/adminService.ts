@@ -60,3 +60,10 @@ export const updateBusStatus = async (
   const res = await adminApi.get(`/${ADMIN_BASE_ROUTE}/buses/${busId}/documents/${docKey}`);
   return res.data.data.url;
 };
+
+
+export const updateBusActiveStatus = async (busId: string,isActive: boolean,) => {
+  const res = await adminApi.patch(`/${ADMIN_BASE_ROUTE}/buses/${busId}/active-status`,{ isActive },);
+
+  return res.data.data;
+};

@@ -64,7 +64,7 @@ export interface IBus {
   amenities: BusAmenity[];
 
   documents: IBusDocuments;
-
+  isDeleted: boolean;
   approvalStatus: BusApprovalStatus;
 
   isActive: boolean;

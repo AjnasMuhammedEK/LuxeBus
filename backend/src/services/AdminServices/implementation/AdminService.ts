@@ -162,4 +162,27 @@ export class AdminService implements IAdminService {
 
     return updatedBus;
   }
+
+  async updateBusActiveStatus(busId: string, isActive: boolean) {
+    const bus = await this._busRepository.findBusById(busId);
+
+    if (!bus) {
+      throw new Error("Bus not found");
+    }
+
+    if (bus.approvalStatus !== "APPROVED") {
+      throw new Error("Only approved buses can be blocked or unblocked");
+    }
+
+     const updatedBus = await this._busRepository.updateBusActiveStatus(
+      busId,
+      isActive,
+    );
+
+    if (!updatedBus) {
+      throw new Error("Something went wrong while updating bus status");
+    }
+
+    return updatedBus;
+  }
 }

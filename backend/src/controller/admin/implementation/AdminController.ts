@@ -226,7 +226,6 @@ export class AdminController implements IAdminController {
       const { busId } = req.params;
       const { approvalStatus, rejectReason } = req.body;
 
-      
       if (typeof busId !== "string" || !Types.ObjectId.isValid(busId)) {
         res
           .status(HttpStatus.BAD_REQUEST)
@@ -234,7 +233,6 @@ export class AdminController implements IAdminController {
         return;
       }
 
-      
       if (approvalStatus !== "APPROVED" && approvalStatus !== "REJECTED") {
         res
           .status(HttpStatus.BAD_REQUEST)
@@ -242,7 +240,6 @@ export class AdminController implements IAdminController {
         return;
       }
 
-       
       if (
         approvalStatus === "REJECTED" &&
         (typeof rejectReason !== "string" || rejectReason.trim().length < 5)
@@ -271,6 +268,48 @@ export class AdminController implements IAdminController {
           createResponse(
             true,
             `Bus ${approvalStatus.toLowerCase()} successfully`,
+            updatedBus,
+          ),
+        );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateBusActiveStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const { busId } = req.params;
+      const { isActive } = req.body;
+
+      if (typeof busId !== "string" || !Types.ObjectId.isValid(busId)) {
+        res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse(false, "Invalid bus ID", null));
+        return;
+      }
+
+      if (typeof isActive !== "boolean") {
+        res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(createResponse(false, "Invalid active status", null));
+        return;
+      }
+
+      const updatedBus = await this._adminService.updateBusActiveStatus(
+        busId,
+        isActive,
+      );
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          createResponse(
+            true,
+            `Bus ${isActive ? "unblocked" : "blocked"} successfully`,
             updatedBus,
           ),
         );

@@ -45,6 +45,18 @@ import { IBusService } from "../services/operatorService/bus/interface/IBusServi
 import { BusService } from "../services/operatorService/bus/implementation/BusService";
 import { IBusController } from "../controller/operator/Bus/interface/IBusController";
 import { BusController } from "../controller/operator/Bus/implimentation/BusController";
+import { IUserRepository } from "../repositories/userRepository/interface/IUserRepository";
+import { UserRepository } from "../repositories/userRepository/implementation/UserRepository";
+import { IUserService } from "../services/userService/interface/IUserService";
+import { UserService } from "../services/userService/implementation/UserService";
+import { IUserController } from "../controller/userController/interface/IUserController";
+import { UserController } from "../controller/userController/implementation/UserController";
+import { IRouteRepository } from "../repositories/route/interfaces/IRouteRepository";
+import { RouteRepository } from "../repositories/route/implementation/RouteRepository";
+import { IRouteService } from "../services/operatorService/route/interface/IRouteService";
+import { RouteService } from "../services/operatorService/route/implementation/RouteService";
+import { IRouteController } from "../controller/operator/Route/interface/IRouteController";
+import { RouteController } from "../controller/operator/Route/implementation/RouteController";
 
 export const container = new Container();
 
@@ -107,3 +119,27 @@ container
 container
 .bind<IBusController>(TYPES.BusController)
 .to(BusController)
+
+container
+.bind<IUserRepository>(TYPES.UserRepository)
+.to(UserRepository)
+
+container
+.bind<IUserService>(TYPES.UserService)
+.to(UserService)
+
+container
+.bind<IUserController>(TYPES.UserController)
+.to(UserController)
+
+container
+.bind<IRouteRepository>(TYPES.RouteRepository)
+.to(RouteRepository)
+
+container
+.bind<IRouteService>(TYPES.RouteService)
+.to(RouteService)
+
+container
+.bind<IRouteController>(TYPES.RouteController)
+.to(RouteController)

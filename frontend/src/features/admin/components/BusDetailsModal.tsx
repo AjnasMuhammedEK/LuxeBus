@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { X, FileText } from "lucide-react";
 import toast from "react-hot-toast";
-import { getBusDocumentUrl, updateBusStatus } from "../services/adminService";
+import {
+  getBusDocumentUrl,
+  updateBusStatus,
+  updateBusActiveStatus,
+} from "../services/adminService";
 import { statusStyles } from "../pages/Buses";
 import type {
   IAdminBus,
@@ -33,15 +37,20 @@ const BusDetailsModal = ({ bus, onClose, onUpdated }: Props) => {
     bus.approvalStatus,
   );
 
-
   const isRejected = bus.approvalStatus === "REJECTED";
 
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [loadingDocument, setLoadingDocument] = useState<BusDocumentKey | null>(
     null,
   );
+
   const [reason, setReason] = useState(bus.rejectReason ?? "");
   const [saving, setSaving] = useState(false);
+
+  const [updatingActiveStatus, setUpdatingActiveStatus] = useState(false);
+
+  // Local state for Block / Unblock
+  const [isActive, setIsActive] = useState(bus.isActive);
 
   const snapshot = bus.seatLayoutSnapshot;
 
@@ -71,23 +80,55 @@ const BusDetailsModal = ({ bus, onClose, onUpdated }: Props) => {
       toast.error("Select a different status");
       return;
     }
+
     if (newStatus === "REJECTED" && reason.trim().length < 5) {
       toast.error("Please enter a reject reason (min 5 characters)");
       return;
     }
+
     try {
       setSaving(true);
+
       await updateBusStatus(
         bus._id,
         newStatus,
         newStatus === "REJECTED" ? reason.trim() : undefined,
       );
+
       toast.success(`Bus ${newStatus.toLowerCase()}`);
       onUpdated();
     } catch {
       toast.error("Failed to update status");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Block / Unblock Bus without closing the modal
+  const handleToggleActiveStatus = async () => {
+    if (bus.approvalStatus !== "APPROVED") {
+      toast.error("Only approved buses can be blocked or unblocked");
+      return;
+    }
+
+    try {
+      setUpdatingActiveStatus(true);
+
+      const newIsActive = !isActive;
+
+      await updateBusActiveStatus(bus._id, newIsActive);
+
+      // Update local state after successful API response
+      setIsActive(newIsActive);
+
+      toast.success(
+        newIsActive ? "Bus unblocked successfully" : "Bus blocked successfully",
+      );
+    } catch (error) {
+      console.error("Failed to update bus active status:", error);
+      toast.error("Failed to update bus status");
+    } finally {
+      setUpdatingActiveStatus(false);
     }
   };
 
@@ -100,12 +141,14 @@ const BusDetailsModal = ({ bus, onClose, onUpdated }: Props) => {
             <h2 className="text-xl font-bold text-[#0B1F3A]">
               {bus.registrationNumber}
             </h2>
+
             <span
               className={`mt-1 inline-block px-2.5 py-1 text-[11px] font-semibold rounded-full border ${statusStyles[bus.approvalStatus]}`}
             >
               {bus.approvalStatus}
             </span>
           </div>
+
           <button onClick={onClose}>
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -117,15 +160,24 @@ const BusDetailsModal = ({ bus, onClose, onUpdated }: Props) => {
             <h3 className="font-semibold text-[#0B1F3A] mb-3">
               Bus Information
             </h3>
+
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <Field label="Manufacturer" value={bus.manufacturer} />
+
               <Field label="Model" value={bus.model} />
+
               <Field label="Year" value={bus.manufacturingYear} />
+
               <Field
                 label="Bus Type"
                 value={bus.busType.replaceAll("_", " ")}
               />
-              <Field label="Active" value={bus.isActive ? "Yes" : "No"} />
+
+              <Field
+                label="Bus Status"
+                value={isActive ? "Active" : "Blocked"}
+              />
+
               <Field
                 label="Added On"
                 value={
@@ -138,10 +190,14 @@ const BusDetailsModal = ({ bus, onClose, onUpdated }: Props) => {
           {/* Operator */}
           <section>
             <h3 className="font-semibold text-[#0B1F3A] mb-3">Operator</h3>
+
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <Field label="Company" value={bus.operatorId?.legalEntityName} />
+
               <Field label="Owner" value={bus.operatorId?.ownerName} />
+
               <Field label="Email" value={bus.operatorId?.email} />
+
               <Field label="Phone" value={bus.operatorId?.phone} />
             </div>
           </section>
@@ -149,13 +205,17 @@ const BusDetailsModal = ({ bus, onClose, onUpdated }: Props) => {
           {/* Seat layout */}
           <section>
             <h3 className="font-semibold text-[#0B1F3A] mb-3">Seat Layout</h3>
+
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <Field label="Layout" value={snapshot.name} />
+
               <Field label="Total Capacity" value={snapshot.totalCapacity} />
+
               <Field
                 label="Decks"
                 value={snapshot.decks.map((d) => d.name).join(", ")}
               />
+
               {Object.entries(seatCounts).map(([type, count]) => (
                 <Field
                   key={type}
@@ -164,12 +224,12 @@ const BusDetailsModal = ({ bus, onClose, onUpdated }: Props) => {
                 />
               ))}
             </div>
-            {/* TODO: ഇവിടെ നമ്മുടെ SeatLayoutPreview reuse ചെയ്യാം (props അറിഞ്ഞിട്ട്) */}
           </section>
 
           {/* Amenities */}
           <section>
             <h3 className="font-semibold text-[#0B1F3A] mb-3">Amenities</h3>
+
             <div className="flex flex-wrap gap-2">
               {bus.amenities.length ? (
                 bus.amenities.map((a) => (
@@ -186,134 +246,183 @@ const BusDetailsModal = ({ bus, onClose, onUpdated }: Props) => {
             </div>
           </section>
 
-     
-<section>
-  <h3 className="font-semibold text-[#0B1F3A] mb-3">
-    Documents
-  </h3>
+          {/* Documents */}
+          <section>
+            <h3 className="font-semibold text-[#0B1F3A] mb-3">Documents</h3>
 
-  <div className="grid md:grid-cols-3 gap-3">
-    {DOCS.map((d) => (
-      <button
-        key={d.key}
-        type="button"
-        disabled={loadingDocument !== null}
-        onClick={() => handleViewDoc(d.key)}
-        className="flex items-center gap-2 border rounded-lg p-3 text-sm hover:border-[#C9A227] hover:bg-gray-50 disabled:opacity-50"
-      >
-        <FileText className="w-4 h-4 text-[#C9A227]" />
+            <div className="grid md:grid-cols-3 gap-3">
+              {DOCS.map((d) => (
+                <button
+                  key={d.key}
+                  type="button"
+                  disabled={loadingDocument !== null}
+                  onClick={() => handleViewDoc(d.key)}
+                  className="flex items-center gap-2 border rounded-lg p-3 text-sm hover:border-[#C9A227] hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <FileText className="w-4 h-4 text-[#C9A227]" />
 
-        {loadingDocument === d.key
-          ? "Loading..."
-          : d.label}
-      </button>
-    ))}
-  </div>
-</section>
+                  {loadingDocument === d.key ? "Loading..." : d.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Block / Unblock Bus */}
+          {bus.approvalStatus === "APPROVED" && (
+            <section className="border-t pt-5">
+              <h3 className="font-semibold text-[#0B1F3A] mb-3">
+                Bus Availability
+              </h3>
+
+              <div
+                className={`rounded-lg border p-4 ${
+                  isActive
+                    ? "bg-green-50 border-green-200"
+                    : "bg-red-50 border-red-200"
+                }`}
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p
+                      className={`text-sm font-semibold ${
+                        isActive ? "text-green-700" : "text-red-700"
+                      }`}
+                    >
+                      {isActive ? "Bus is Active" : "Bus is Blocked"}
+                    </p>
+
+                    <p className="text-xs text-gray-600 mt-1">
+                      {isActive
+                        ? "This bus is currently active."
+                        : "This bus has been blocked by the admin."}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleToggleActiveStatus}
+                    disabled={updatingActiveStatus}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                      isActive
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-green-600 hover:bg-green-700"
+                    }`}
+                  >
+                    {updatingActiveStatus
+                      ? "Updating..."
+                      : isActive
+                        ? "Block Bus"
+                        : "Unblock Bus"}
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Change status */}
-         {/* Change status */}
-<section className="border-t pt-5">
-  <h3 className="font-semibold text-[#0B1F3A] mb-3">
-    Change Status
-  </h3>
+          <section className="border-t pt-5">
+            <h3 className="font-semibold text-[#0B1F3A] mb-3">Change Status</h3>
 
-  {isRejected && (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-      <p className="text-sm font-bold text-red-700">
-        Rejected.
-      </p>
-      <p className="text-sm text-red-600 mt-1">
-        The status cannot be changed.
-      </p>
-      <p className="text-sm text-red-600 mt-2">
-        Rejection reason: {bus.rejectReason || "No reason provided"}
-      </p>
-    </div>
-  )}
+            {isRejected && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p className="text-sm font-bold text-red-700">Rejected.</p>
 
-  <div className="flex flex-wrap gap-2 mb-3">
-    {(["PENDING", "APPROVED", "REJECTED"] as BusApprovalStatus[]).map(
-      (s) => (
-        <button
-          key={s}
-          type="button"
-          disabled={isRejected}
-          onClick={() => setNewStatus(s)}
-          className={`px-4 py-2 rounded-lg text-sm border ${
-            newStatus === s
-              ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
-              : "hover:bg-gray-50"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          {s}
-        </button>
-      ),
-    )}
-  </div>
+                <p className="text-sm text-red-600 mt-1">
+                  The status cannot be changed.
+                </p>
 
-  {newStatus === "REJECTED" && !isRejected && (
-    <textarea
-      value={reason}
-      onChange={(e) => setReason(e.target.value)}
-      rows={3}
-      placeholder="Reason for rejection (operator will see this)"
-      className="w-full border rounded-lg p-3 text-sm focus:outline-none focus:border-[#C9A227]"
-    />
-  )}
+                <p className="text-sm text-red-600 mt-2">
+                  Rejection reason: {bus.rejectReason || "No reason provided"}
+                </p>
+              </div>
+            )}
 
-  <div className="flex justify-end gap-3 mt-4">
-    <button
-      onClick={onClose}
-      className="px-4 py-2 border rounded-lg text-sm"
-    >
-      Cancel
-    </button>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(["PENDING", "APPROVED", "REJECTED"] as BusApprovalStatus[]).map(
+                (s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    disabled={isRejected}
+                    onClick={() => setNewStatus(s)}
+                    className={`px-4 py-2 rounded-lg text-sm border ${
+                      newStatus === s
+                        ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
+                        : "hover:bg-gray-50"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {s}
+                  </button>
+                ),
+              )}
+            </div>
 
-    <button
-      onClick={handleSave}
-      disabled={saving || isRejected}
-      className="px-5 py-2 rounded-lg text-sm font-semibold bg-[#C9A227] text-[#0B1F3A] disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {isRejected ? "Rejected" : saving ? "Saving..." : "Update Status"}
-    </button>
-  </div>
-</section>
+            {newStatus === "REJECTED" && !isRejected && (
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                placeholder="Reason for rejection (operator will see this)"
+                className="w-full border rounded-lg p-3 text-sm focus:outline-none focus:border-[#C9A227]"
+              />
+            )}
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleSave}
+                disabled={saving || isRejected}
+                className="px-5 py-2 rounded-lg text-sm font-semibold bg-[#C9A227] text-[#0B1F3A] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRejected
+                  ? "Rejected"
+                  : saving
+                    ? "Saving..."
+                    : "Update Status"}
+              </button>
+            </div>
+          </section>
         </div>
       </div>
+
       {/* Document Preview Modal */}
-{documentUrl && (
-  <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-4">
-    <div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+      {documentUrl && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-4">
+          <div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+            {/* Preview Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-600" />
 
-      {/* Preview Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-        <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-blue-600" />
+                <h3 className="text-base font-semibold text-slate-900">
+                  Bus Document Preview
+                </h3>
+              </div>
 
-          <h3 className="text-base font-semibold text-slate-900">
-            Bus Document Preview
-          </h3>
+              <button
+                type="button"
+                onClick={() => setDocumentUrl(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Document Viewer */}
+            <iframe
+              src={documentUrl}
+              title="Bus Document Preview"
+              className="min-h-0 w-full flex-1"
+            />
+          </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setDocumentUrl(null)}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      {/* Document Viewer */}
-      <iframe
-        src={documentUrl}
-        title="Bus Document Preview"
-        className="min-h-0 w-full flex-1"
-      />
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 };

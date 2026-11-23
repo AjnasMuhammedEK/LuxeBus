@@ -7,6 +7,7 @@ import { authMiddleware } from "../middleware/authMiddleware";
 import { OperatorController } from "../controller/operator/implementation/OperatorController";
 import { SeatLayoutController } from "../controller/operator/seatLayout/implementation/SeatLayoutController";
 import { BusController } from "../controller/operator/Bus/implimentation/BusController";
+import { RouteController } from "../controller/operator/Route/implementation/RouteController";
 
 const router = Router();
 
@@ -21,6 +22,8 @@ const seatLayoutController = container.get<SeatLayoutController>(
 );
 
 const busController = container.get<BusController>(TYPES.BusController);
+
+const routeController = container.get<RouteController>(TYPES.RouteController);
 
 router.post(
   "/staffRegister",
@@ -92,5 +95,54 @@ router.patch(
   ]),
   busController.resubmitBus,
 );
+router.delete(
+  "/deleteBus/:busId",
+  authMiddleware,
+  busController.deleteBus,
+);
 
+
+// ================= ROUTE MANAGEMENT =================
+
+// CREATE ROUTE
+router.post(
+  "/createRoute",
+  authMiddleware,
+  routeController.createRoute,
+);
+
+// GET ALL ROUTES
+router.get(
+  "/getRoutes",
+  authMiddleware,
+  routeController.getRoutes,
+);
+
+// GET ROUTE BY ID
+router.get(
+  "/getRoute/:routeId",
+  authMiddleware,
+  routeController.getRouteById,
+);
+
+// UPDATE ROUTE
+router.patch(
+  "/updateRoute/:routeId",
+  authMiddleware,
+  routeController.updateRoute,
+);
+
+// DELETE ROUTE
+router.delete(
+  "/deleteRoute/:routeId",
+  authMiddleware,
+  routeController.deleteRoute,
+);
+
+// UPDATE ROUTE STATUS
+router.patch(
+  "/updateRouteStatus/:routeId",
+  authMiddleware,
+  routeController.updateRouteStatus,
+);
 export default router;

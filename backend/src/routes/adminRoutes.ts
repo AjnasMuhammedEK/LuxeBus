@@ -29,9 +29,16 @@ router.get(
   adminController.getBusDocumentSignedUrl,
 );
 
- router.patch(
+router.patch(
   "/buses/:busId/status",
   authMiddleware,
   adminController.updateBusStatus,
 );
+
+router.patch(
+  "/buses/:busId/active-status",
+  authMiddleware,
+  adminController.updateBusActiveStatus,
+);
+
 export default router;

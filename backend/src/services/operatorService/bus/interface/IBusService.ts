@@ -11,5 +11,10 @@ export interface IBusService {
   data: IResubmitBusDTO,
   files: IResubmitBusFiles
 ): Promise<IBus>;
+
+deleteBus(
+  operatorId: string,
+  busId: string
+): Promise<IBus>;
 }
    

@@ -13,7 +13,7 @@ const ProtectedRoute = ({ role }: ProtectedRouteProps) => {
   const staff = useSelector((state : RootState) => state.staffAuth.staff)
 
   if (role === "user") {
-    return user ? <Outlet /> : <Navigate to="/login" replace />;
+    return user ? <Outlet /> : <Navigate to="/" replace />;
   }
 
   if (role === "operator") {

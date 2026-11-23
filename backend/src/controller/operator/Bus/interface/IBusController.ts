@@ -19,4 +19,11 @@ export interface IBusController {
   res: Response,
   next: NextFunction
 ): Promise<void>;
+
+
+deleteBus(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void>;
 }

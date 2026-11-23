@@ -51,3 +51,11 @@ export const resubmitBus = async (
 
   return response.data;
 };
+
+export const deleteBus = async (busId: string) => {
+  const response = await opperatorApi.delete(
+    `/${OPERATOR_BASE_ROUTE}/deleteBus/${busId}`,
+  );
+
+  return response.data;
+};

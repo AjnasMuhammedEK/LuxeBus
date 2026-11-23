@@ -96,6 +96,7 @@ export class BusService implements IBusService {
       busType: busSeatLayout.busType,
       documents: allDoc,
       isActive: true,
+      isDeleted:false,
       manufacturer: data.manufacturer,
       manufacturingYear: data.manufacturingYear,
       model: data.model,
@@ -224,4 +225,36 @@ export class BusService implements IBusService {
 
     return updatedBus;
   }
+
+
+
+  async deleteBus(
+  operatorId: string,
+  busId: string,
+): Promise<IBus> {
+  const existingBus = await this._busRepository.findBusById(busId);
+
+  if (!existingBus) {
+    throw new Error("Bus not found");
+  }
+
+  if (existingBus.operatorId.toString() !== operatorId) {
+    throw new Error("You are not authorized to delete this bus");
+  }
+
+  if (existingBus.isDeleted) {
+    throw new Error("Bus is already deleted");
+  }
+
+  const deletedBus = await this._busRepository.deleteBus(
+    busId,
+    operatorId,
+  );
+
+  if (!deletedBus) {
+    throw new Error("Unable to delete bus. Please try again");
+  }
+
+  return deletedBus;
+}
 }

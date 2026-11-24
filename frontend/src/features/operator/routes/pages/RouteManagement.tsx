@@ -1,29 +1,26 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  Eye,
-  Pencil,
   Plus,
-  Power,
   Search,
-  Trash2,
   ChevronLeft,
   ChevronRight,
   MapPin,
+  Eye,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import AddRouteModal from "../components/AddRouteModal";
-// import EditRouteModal from "../components/EditRouteModal";
-// import RouteDetailsModal from "../components/RouteDetailsModal";
+import EditRouteModal from "../components/EditRouteModal";
+import RouteDetailsModal from "../components/RouteDetailsModal";
 
-// import ConfirmDialog from "@/components/common/ConfirmDialog";
 import DataTable from "@/components/common/tables/DataTable";
 import type { Column } from "@/components/common/tables/DataTable";
 
 import {
   getOperatorRoutes,
-  updateRouteStatus,
   deleteRoute,
 } from "../service/routeService";
 
@@ -39,10 +36,12 @@ interface IRouteListResult {
   totalPages: number;
 }
 
-// Format seconds into hours and minutes
 const formatDuration = (seconds: number): string => {
-  const totalMinutes = Math.round(seconds / 60);
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return "—";
+  }
 
+  const totalMinutes = Math.round(seconds / 60);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
@@ -57,47 +56,128 @@ const formatDuration = (seconds: number): string => {
   return `${hours}h ${minutes}m`;
 };
 
-// Format meters into kilometres
 const formatDistance = (meters: number): string => {
+  if (!Number.isFinite(meters) || meters < 0) {
+    return "—";
+  }
+
   return `${(meters / 1000).toFixed(1)} km`;
 };
 
 const RouteManagement = () => {
-  // Route data
   const [routes, setRoutes] = useState<IRoute[]>([]);
 
-  // Pagination
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
 
-  // Loading and refreshing
   const [isLoading, setIsLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [deletingRouteId, setDeletingRouteId] = useState<string | null>(null);
 
-  // Search and filters
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<RouteTab>("ALL");
 
-  // Modal states
   const [addOpen, setAddOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+
+  const [editRouteId, setEditRouteId] = useState<string | null>(null);
+
   const [detailsOpen, setDetailsOpen] = useState(false);
-
   const [selectedRoute, setSelectedRoute] = useState<IRoute | null>(null);
-
-  // Confirmation dialogs
-  const [toggleTarget, setToggleTarget] = useState<IRoute | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<IRoute | null>(null);
-
-  const [isActionLoading, setIsActionLoading] = useState(false);
 
   const refresh = () => {
     setRefreshKey((prev) => prev + 1);
   };
 
-  // Fetch routes
+  const handleDeleteRoute = async (
+    route: IRoute,
+    toastId: string,
+  ) => {
+    if (deletingRouteId) {
+      return;
+    }
+
+    try {
+      setDeletingRouteId(route._id);
+
+      await deleteRoute(route._id);
+
+      toast.dismiss(toastId);
+      toast.success("Route deleted successfully");
+
+      if (routes.length === 1 && page > 1) {
+        setPage((prev) => prev - 1);
+      } else {
+        refresh();
+      }
+    } catch (error) {
+      toast.dismiss(toastId);
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete route",
+      );
+    } finally {
+      setDeletingRouteId(null);
+    }
+  };
+
+  const confirmDeleteRoute = (route: IRoute) => {
+    toast.custom(
+      (t) => (
+        <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-xl">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <Trash2 className="h-5 w-5" />
+            </div>
+
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Delete Route?
+              </h3>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-slate-700">
+                  {route.routeName}
+                </span>
+                ? This action will remove the route from your route list.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => toast.dismiss(t.id)}
+              disabled={deletingRouteId === route._id}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleDeleteRoute(route, t.id)}
+              disabled={deletingRouteId !== null}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {deletingRouteId === route._id
+                ? "Deleting..."
+                : "Delete Route"}
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: Infinity,
+        position: "top-center",
+      },
+    );
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -117,17 +197,17 @@ const RouteManagement = () => {
 
         if (cancelled) return;
 
-        // Expected createResponse structure:
-        // response.data.data = { routes, total, totalPages }
-        const result: IRouteListResult = response.data.data;
+        const result: IRouteListResult | undefined = response?.data;
 
-        setRoutes(result.routes ?? []);
+        if (!result || !Array.isArray(result.routes)) {
+          throw new Error("Invalid routes API response");
+        }
+
+        setRoutes(result.routes);
         setTotal(result.total ?? 0);
         setTotalPages(Math.max(result.totalPages ?? 1, 1));
       } catch (error) {
         if (cancelled) return;
-
-        console.error("Failed to fetch routes:", error);
 
         toast.error(
           error instanceof Error
@@ -152,7 +232,6 @@ const RouteManagement = () => {
     };
   }, [page, search, activeTab, refreshKey]);
 
-  // Search debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       setPage(1);
@@ -162,19 +241,12 @@ const RouteManagement = () => {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Pagination numbers
   const pageNumbers = useMemo(() => {
     const maxVisible = 5;
 
-    let start = Math.max(
-      1,
-      page - Math.floor(maxVisible / 2),
-    );
+    let start = Math.max(1, page - Math.floor(maxVisible / 2));
 
-    const end = Math.min(
-      totalPages,
-      start + maxVisible - 1,
-    );
+    const end = Math.min(totalPages, start + maxVisible - 1);
 
     start = Math.max(1, end - maxVisible + 1);
 
@@ -184,78 +256,10 @@ const RouteManagement = () => {
     );
   }, [page, totalPages]);
 
-  // Activate / Deactivate route
-  const handleToggleStatus = async () => {
-    if (!toggleTarget) return;
-
-    try {
-      setIsActionLoading(true);
-
-      const newStatus = !toggleTarget.isActive;
-
-      await updateRouteStatus(
-        toggleTarget._id,
-        newStatus,
-      );
-
-      toast.success(
-        `Route ${newStatus ? "activated" : "deactivated"} successfully`,
-      );
-
-      setToggleTarget(null);
-      refresh();
-    } catch (error) {
-      console.error("Failed to update route status:", error);
-
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to update route status",
-      );
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  // Delete route (soft delete)
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-
-    try {
-      setIsActionLoading(true);
-
-      await deleteRoute(deleteTarget._id);
-
-      toast.success("Route deleted successfully");
-
-      setDeleteTarget(null);
-
-      // Move to previous page if the current page
-      // contained only the deleted route.
-      if (routes.length === 1 && page > 1) {
-        setPage((prev) => prev - 1);
-      } else {
-        refresh();
-      }
-    } catch (error) {
-      console.error("Failed to delete route:", error);
-
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to delete route",
-      );
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  // Table columns
   const routeColumns: Column<IRoute>[] = [
     {
       key: "route",
       header: "Route",
-
       render: (route) => (
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700">
@@ -274,17 +278,13 @@ const RouteManagement = () => {
         </div>
       ),
     },
-
     {
       key: "boarding",
       header: "Boarding Points",
-
       render: (route) => (
         <PointsList
           points={[
-            ...(route.origin
-              ? [{ name: route.origin.name }]
-              : []),
+            { name: route.origin.name },
             ...route.stops
               .filter((stop) => stop.isBoardingPoint)
               .map((stop) => ({ name: stop.name })),
@@ -292,29 +292,23 @@ const RouteManagement = () => {
         />
       ),
     },
-
     {
       key: "dropping",
       header: "Dropping Points",
-
       render: (route) => (
         <PointsList
           points={[
             ...route.stops
               .filter((stop) => stop.isDroppingPoint)
               .map((stop) => ({ name: stop.name })),
-            ...(route.destination
-              ? [{ name: route.destination.name }]
-              : []),
+            { name: route.destination.name },
           ]}
         />
       ),
     },
-
     {
       key: "distance",
       header: "Distance & Duration",
-
       render: (route) => (
         <div>
           <p className="font-medium text-slate-700">
@@ -327,11 +321,9 @@ const RouteManagement = () => {
         </div>
       ),
     },
-
     {
       key: "status",
       header: "Status",
-
       render: (route) => (
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -344,61 +336,41 @@ const RouteManagement = () => {
         </span>
       ),
     },
-
     {
       key: "actions",
       header: "Actions",
-
       render: (route) => (
-        <div className="flex items-center justify-end gap-1">
-          {/* View route */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => {
               setSelectedRoute(route);
               setDetailsOpen(true);
             }}
-            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-            aria-label={`View ${route.routeName}`}
+            title="View route details"
+            aria-label={`View ${route.routeName} details`}
+            className="rounded-lg p-2 text-slate-500 transition hover:bg-blue-50 hover:text-blue-700"
           >
             <Eye className="h-4 w-4" />
           </button>
 
-          {/* Edit route */}
           <button
             type="button"
-            onClick={() => {
-              setSelectedRoute(route);
-              setEditOpen(true);
-            }}
-            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            onClick={() => setEditRouteId(route._id)}
+            title="Edit route"
             aria-label={`Edit ${route.routeName}`}
+            className="rounded-lg p-2 text-slate-500 transition hover:bg-amber-50 hover:text-amber-700"
           >
             <Pencil className="h-4 w-4" />
           </button>
 
-          {/* Activate / Deactivate */}
           <button
             type="button"
-            onClick={() => setToggleTarget(route)}
-            className={`rounded-md p-1.5 hover:bg-slate-100 ${
-              route.isActive
-                ? "text-green-600 hover:text-green-700"
-                : "text-slate-400 hover:text-slate-600"
-            }`}
-            aria-label={`${
-              route.isActive ? "Deactivate" : "Activate"
-            } ${route.routeName}`}
-          >
-            <Power className="h-4 w-4" />
-          </button>
-
-          {/* Delete route */}
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(route)}
-            className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+            onClick={() => confirmDeleteRoute(route)}
+            disabled={deletingRouteId !== null}
+            title="Delete route"
             aria-label={`Delete ${route.routeName}`}
+            className="rounded-lg p-2 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -416,8 +388,6 @@ const RouteManagement = () => {
   return (
     <div className="min-h-screen w-full bg-slate-50 px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-6xl">
-
-        {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-bold text-slate-900">
@@ -439,7 +409,6 @@ const RouteManagement = () => {
           </button>
         </div>
 
-        {/* Route summary */}
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-6">
             <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
@@ -476,10 +445,7 @@ const RouteManagement = () => {
           </div>
         </div>
 
-        {/* Route Directory */}
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white">
-
-          {/* Search and filters */}
           <div className="flex flex-col gap-3 border-b border-slate-200 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900">
@@ -492,8 +458,6 @@ const RouteManagement = () => {
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-
-              {/* Search */}
               <div className="flex h-[42px] w-full items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 ring-1 ring-transparent transition-shadow focus-within:border-blue-400 focus-within:ring-blue-100 sm:w-64">
                 <Search className="h-4 w-4 shrink-0 text-slate-400" />
 
@@ -507,7 +471,6 @@ const RouteManagement = () => {
                 />
               </div>
 
-              {/* Status filters */}
               <div className="flex flex-wrap gap-2">
                 {tabs.map((tab) => (
                   <button
@@ -530,7 +493,6 @@ const RouteManagement = () => {
             </div>
           </div>
 
-          {/* Routes table */}
           <DataTable
             columns={routeColumns}
             data={routes}
@@ -538,16 +500,13 @@ const RouteManagement = () => {
             loading={isLoading}
             loadingMessage="Loading routes..."
             emptyMessage="No routes found. Add a route to get started."
-            minWidth="950px"
+            minWidth="1050px"
           />
 
-          {/* Pagination */}
           <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-6 py-4 sm:flex-row">
-
             <p className="text-xs text-slate-400">
-              Showing{" "}
-              {total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}{" "}
-              to {Math.min(page * PAGE_SIZE, total)} of {total} routes
+              Showing {total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1} to{" "}
+              {Math.min(page * PAGE_SIZE, total)} of {total} routes
             </p>
 
             <div className="flex items-center gap-1">
@@ -558,6 +517,7 @@ const RouteManagement = () => {
                 }
                 disabled={page === 1 || isLoading}
                 className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -587,6 +547,7 @@ const RouteManagement = () => {
                 }
                 disabled={page >= totalPages || isLoading}
                 className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -595,7 +556,6 @@ const RouteManagement = () => {
         </div>
       </div>
 
-      {/* Add Route Modal */}
       <AddRouteModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
@@ -606,75 +566,35 @@ const RouteManagement = () => {
         }}
       />
 
-      {/* Edit Route Modal */}
-      {/* <EditRouteModal
-        open={editOpen}
-        route={selectedRoute}
-        onClose={() => {
-          setEditOpen(false);
-          setSelectedRoute(null);
-        }}
+      <EditRouteModal
+        open={Boolean(editRouteId)}
+        routeId={editRouteId}
+        onClose={() => setEditRouteId(null)}
         onUpdated={() => {
-          setEditOpen(false);
-          setSelectedRoute(null);
+          setEditRouteId(null);
           refresh();
         }}
-      /> */}
+      />
 
-      {/* Route Details Modal */}
-      {/* <RouteDetailsModal
+      <RouteDetailsModal
         open={detailsOpen}
         route={selectedRoute}
         onClose={() => {
           setDetailsOpen(false);
           setSelectedRoute(null);
         }}
-      /> */}
-
-      {/* Activate / Deactivate Confirmation */}
-      {/* <ConfirmDialog
-        open={!!toggleTarget}
-        title={`${
-          toggleTarget?.isActive ? "Deactivate" : "Activate"
-        } route?`}
-        message={`Are you sure you want to ${
-          toggleTarget?.isActive ? "deactivate" : "activate"
-        } "${toggleTarget?.routeName}"?`}
-        confirmLabel={
-          toggleTarget?.isActive ? "Deactivate" : "Activate"
-        }
-        loading={isActionLoading}
-        onConfirm={handleToggleStatus}
-        onCancel={() => setToggleTarget(null)}
-      /> */}
-
-      {/* Delete Confirmation */}
-      {/* <ConfirmDialog
-        open={!!deleteTarget}
-        title="Delete route?"
-        message={`"${deleteTarget?.routeName}" will be removed from your active route list. Are you sure?`}
-        confirmLabel="Delete"
-        variant="danger"
-        loading={isActionLoading}
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-      /> */}
+      />
     </div>
   );
 };
 
-// Boarding / Dropping point list
 const PointsList = ({
   points,
 }: {
   points: { name: string }[];
 }) => {
   if (!points || points.length === 0) {
-    return (
-      <span className="text-xs text-slate-400">
-        —
-      </span>
-    );
+    return <span className="text-xs text-slate-400">—</span>;
   }
 
   const visible = points.slice(0, 2);

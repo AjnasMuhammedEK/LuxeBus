@@ -7,6 +7,7 @@ export interface IRouteLocation {
   longitude: number;
 }
 
+
 export interface IRouteStop extends IRouteLocation {
   order: number;
   isBoardingPoint: boolean;

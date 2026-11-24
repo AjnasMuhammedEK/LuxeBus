@@ -10,6 +10,7 @@ import PublicRoute from "./PublicRoute";
 import StaffManagement from "@/features/operator/staffs/pages/StaffManagement";
 import FleetManagement from "@/features/operator/fleet/pages/FleetManagement";
 import RouteManagement from "@/features/operator/routes/pages/RouteManagement";
+import TripScheduleManagement from "@/features/operator/tripSchedules/pages/TripScheduleManagement";
 // import { seatTestData } from "@/constants/seatTestData";
  
  
@@ -31,7 +32,7 @@ const OperatorRoutes = () => {
                 <Route path="staff" element={<StaffManagement/>}/>
                 <Route path="fleet" element={<FleetManagement/>}/>
                 <Route path="routes" element={<RouteManagement/>}/>
-                
+                <Route path="scheduleTrip" element={<TripScheduleManagement/>}/>
             </Route>
             </Route>
         </Routes>

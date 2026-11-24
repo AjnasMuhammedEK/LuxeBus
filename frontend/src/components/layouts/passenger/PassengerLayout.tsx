@@ -1,20 +1,20 @@
-import { Outlet } from "react-router-dom";
+  import { Outlet } from "react-router-dom";
 
-import PassengerNavbar from "./PassengerNavbar";
-import PassengerFooter from "./PassengerFooter";
+  import PassengerNavbar from "./PassengerNavbar";
+  import PassengerFooter from "./PassengerFooter";
 
-function PassengerLayout() {
-  return (
-    <>
-      <PassengerNavbar />
+  function PassengerLayout() {
+    return (
+      <>
+        <PassengerNavbar />
 
-      <main className="min-h-screen">
-        <Outlet />
-      </main>
+        <main className="min-h-screen">
+          <Outlet />
+        </main>
 
-      <PassengerFooter />
-    </>
-  );
-}
+        <PassengerFooter />
+      </>
+    );
+  }
 
-export default PassengerLayout;
+  export default PassengerLayout;

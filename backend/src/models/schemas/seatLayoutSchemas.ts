@@ -7,7 +7,7 @@ import type {
   IDeckConfig,
 } from "../../types/seatLayout";
 
-// Individual passenger seat / berth schema
+ 
 export const seatSchema = new Schema<ISeat>(
   {
     seatId: {
@@ -62,8 +62,7 @@ export const seatSchema = new Schema<ISeat>(
     _id: false,
   }
 );
-
-// Non-passenger elements schema
+ 
 export const layoutElementSchema = new Schema<ILayoutElement>(
   {
     elementId: {
@@ -124,8 +123,7 @@ export const layoutElementSchema = new Schema<ILayoutElement>(
     _id: false,
   }
 );
-
-// Bus deck configuration schema
+  
 export const deckSchema = new Schema<IDeckConfig>(
   {
     name: {

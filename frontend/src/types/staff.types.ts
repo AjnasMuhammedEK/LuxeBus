@@ -1,5 +1,3 @@
-// src/types/staff.types.ts
-
 export interface StaffRegisterFormData {
     fullName: string;
     mobileNumber: string;

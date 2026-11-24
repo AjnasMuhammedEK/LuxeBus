@@ -13,7 +13,7 @@ const sidebarLinks: SidebarLinkItem[] = [
   { label: "Route Management", href: "/operator/routes", icon: Route },
   { label: "Bookings", href: "/operator/bookings", icon: CalendarCheck },
   { label: "Fleet Management", href: "/operator/fleet", icon: Bus },
-  { label: "Trip & Schedules", href: "/operator/trips", icon: CalendarClock },
+  { label: "Trip & Schedules", href: "/operator/scheduleTrip", icon: CalendarClock },
   { label: "Staff Management", href: "/operator/staff", icon: Users },
   { label: "Reports", href: "/operator/reports", icon: BarChart3 },
   { label: "Support", href: "/operator/support", icon: Headset },

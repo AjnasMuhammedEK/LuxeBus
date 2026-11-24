@@ -8,13 +8,13 @@ import type {
   ISeat,
 } from "./seatLayout";
 
-// Bus approval status
+ 
 export type BusApprovalStatus =
   | "PENDING"
   | "APPROVED"
   | "REJECTED";
 
-// Available bus amenities
+ 
 export type BusAmenity =
   | "AC"
   | "WIFI"
@@ -22,14 +22,13 @@ export type BusAmenity =
   | "WATER_BOTTLE"
   | "READING_LIGHT";
 
-// Bus documents stored in AWS S3
+ 
 export interface IBusDocuments {
   rc: string;
   fitnessCertificate: string;
   insurance: string;
 }
-
-// Snapshot of the selected predefined seat layout
+ 
 export interface IBusSeatLayoutSnapshot {
   name: string;
   slug: string;
@@ -46,8 +45,9 @@ export interface IBusSeatLayoutSnapshot {
  
 }
 
-// Main Bus document interface
+ 
 export interface IBus {
+  _id?: Types.ObjectId;
   operatorId: Types.ObjectId;
 
   manufacturer: string;

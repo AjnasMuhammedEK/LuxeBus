@@ -57,6 +57,25 @@ import { IRouteService } from "../services/operatorService/route/interface/IRout
 import { RouteService } from "../services/operatorService/route/implementation/RouteService";
 import { IRouteController } from "../controller/operator/Route/interface/IRouteController";
 import { RouteController } from "../controller/operator/Route/implementation/RouteController";
+import { ITripScheduleRepository } from "../repositories/tripSchedule/interfaces/ITripScheduleRepository";
+import { TripScheduleRepository } from "../repositories/tripSchedule/implementation/TripScheduleRepository";
+ 
+import { ITripScheduleService } from "../services/operatorService/tripSchedule/interfaces/ITripScheduleService";
+import { TripScheduleService } from "../services/operatorService/tripSchedule/implementation/TripScheduleService";
+ 
+import { ITripScheduleController } from "../controller/operator/tripSchedule/interfaces/ITripScheduleController";
+import { TripScheduleController } from "../controller/operator/tripSchedule/implementation/TripScheduleController";
+import { PassengerTripController } from "../controller/passengerTrip/implementation/PassengerTripController";
+import { IPassengerTripController } from "../controller/passengerTrip/interfaces/IPassengerTripController";
+import { PassengerTripService } from "../services/userService/passengerTrip/implementation/PassengerTripService";
+import { IPassengerTripService } from "../services/userService/passengerTrip/interfaces/IPassengerTripService";
+import { PassengerTripRepository } from "../repositories/passengerTrip/implementation/PassengerTripRepository";
+import { IPassengerTripRepository } from "../repositories/passengerTrip/interfaces/IPassengerTripRepository";
+import { ITripRepository } from "../repositories/trip/interfaces/ITripRepository";
+import { TripRepository } from "../repositories/trip/implementation/TripRepository";
+import { TripService } from "../services/operatorService/trip/implementation/TripService";
+import { TripController } from "../controller/operator/trip/implementation/TripController";
+import { ITripService } from "../services/operatorService/trip/interfaces/ITripService";
 
 export const container = new Container();
 
@@ -143,3 +162,34 @@ container
 container
 .bind<IRouteController>(TYPES.RouteController)
 .to(RouteController)
+
+container
+  .bind<ITripScheduleRepository>(TYPES.TripScheduleRepository)
+  .to(TripScheduleRepository);
+
+
+ 
+container
+  .bind<ITripScheduleService>(TYPES.TripScheduleService)
+  .to(TripScheduleService);
+
+ 
+container
+.bind<ITripScheduleController>(TYPES.TripScheduleController)
+.to(TripScheduleController)
+
+container
+  .bind<IPassengerTripRepository>(TYPES.PassengerTripRepository)
+  .to(PassengerTripRepository);
+
+container
+  .bind<IPassengerTripService>(TYPES.PassengerTripService)
+  .to(PassengerTripService);
+
+container
+  .bind<IPassengerTripController>(TYPES.PassengerTripController)
+  .to(PassengerTripController);
+
+  container.bind<ITripRepository>(TYPES.TripRepository).to(TripRepository);
+container.bind<ITripService>(TYPES.TripService).to(TripService);
+container.bind<TripController>(TYPES.TripController).to(TripController);

@@ -1,5 +1,7 @@
+
 import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, FormEvent } from "react";
+
 import {
   X,
   Plus,
@@ -10,9 +12,13 @@ import {
   Ruler,
   Loader2,
 } from "lucide-react";
+
 import toast from "react-hot-toast";
 
 import { createRoute } from "../service/routeService";
+import RouteLocationPicker from "./RouteLocationPicker";
+
+import type { IRouteLocation } from "@/types/route.types";
 
 interface LocationForm {
   name: string;
@@ -45,9 +51,6 @@ const emptyLocation: LocationForm = {
 const inputClass =
   "h-[42px] w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100";
 
-const textareaClass =
-  "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100";
-
 interface FieldProps {
   label: string;
   required?: boolean;
@@ -61,102 +64,48 @@ const Field = ({ label, required, children }: FieldProps) => {
         {label}
         {required && <span className="ml-1 text-red-500">*</span>}
       </label>
+
       {children}
     </div>
   );
 };
 
-interface LocationFieldsProps {
-  title: string;
-  location: LocationForm;
-  onChange: (field: keyof LocationForm, value: string) => void;
-  accent: "blue" | "red" | "amber";
-}
+const toLocationForm = (
+  location: IRouteLocation | null,
+): LocationForm => {
+  if (!location) {
+    return { ...emptyLocation };
+  }
 
-const LocationFields = ({
-  title,
-  location,
-  onChange,
-  accent,
-}: LocationFieldsProps) => {
-  const accentClasses = {
-    blue: "bg-blue-50 text-blue-600",
-    red: "bg-red-50 text-red-600",
-    amber: "bg-amber-50 text-amber-600",
+  return {
+    name: location.name,
+    address: location.address,
+    placeId: location.placeId,
+    latitude: String(location.latitude),
+    longitude: String(location.longitude),
   };
+};
 
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-      <div className="mb-4 flex items-center gap-3">
-        <div
-          className={`flex h-9 w-9 items-center justify-center rounded-lg ${accentClasses[accent]}`}
-        >
-          <MapPin size={18} />
-        </div>
+const toPickerLocation = (
+  location: LocationForm,
+): IRouteLocation | null => {
+  if (
+    !location.name ||
+    !location.address ||
+    !location.placeId ||
+    location.latitude === "" ||
+    location.longitude === ""
+  ) {
+    return null;
+  }
 
-        <div>
-          <h4 className="text-sm font-semibold text-slate-800">{title}</h4>
-          <p className="text-xs text-slate-400">
-            Enter the location details
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Location Name" required>
-          <input
-            className={inputClass}
-            placeholder="e.g. Kozhikode"
-            value={location.name}
-            onChange={(e) => onChange("name", e.target.value)}
-          />
-        </Field>
-
-        <Field label="Google Place ID" required>
-          <input
-            className={inputClass}
-            placeholder="Enter place ID"
-            value={location.placeId}
-            onChange={(e) => onChange("placeId", e.target.value)}
-          />
-        </Field>
-
-        <div className="sm:col-span-2">
-          <Field label="Full Address" required>
-            <textarea
-              rows={2}
-              className={textareaClass}
-              placeholder="Enter the complete address"
-              value={location.address}
-              onChange={(e) => onChange("address", e.target.value)}
-            />
-          </Field>
-        </div>
-
-        <Field label="Latitude" required>
-          <input
-            type="number"
-            step="any"
-            className={inputClass}
-            placeholder="e.g. 11.2588"
-            value={location.latitude}
-            onChange={(e) => onChange("latitude", e.target.value)}
-          />
-        </Field>
-
-        <Field label="Longitude" required>
-          <input
-            type="number"
-            step="any"
-            className={inputClass}
-            placeholder="e.g. 75.7804"
-            value={location.longitude}
-            onChange={(e) => onChange("longitude", e.target.value)}
-          />
-        </Field>
-      </div>
-    </div>
-  );
+  return {
+    name: location.name,
+    address: location.address,
+    placeId: location.placeId,
+    latitude: Number(location.latitude),
+    longitude: Number(location.longitude),
+  };
 };
 
 const AddRouteModal = ({
@@ -165,12 +114,17 @@ const AddRouteModal = ({
   onCreated,
 }: AddRouteModalProps) => {
   const [routeName, setRouteName] = useState("");
-  const [origin, setOrigin] = useState<LocationForm>(emptyLocation);
+
+  const [origin, setOrigin] =
+    useState<LocationForm>({ ...emptyLocation });
+
   const [destination, setDestination] =
-    useState<LocationForm>(emptyLocation);
+    useState<LocationForm>({ ...emptyLocation });
 
   const [stops, setStops] = useState<StopForm[]>([]);
+
   const [distanceKm, setDistanceKm] = useState("");
+  const [durationHours, setDurationHours] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -183,28 +137,50 @@ const AddRouteModal = ({
     setDestination({ ...emptyLocation });
     setStops([]);
     setDistanceKm("");
+    setDurationHours("");
     setDurationMinutes("");
     setIsSubmitting(false);
   }, [open]);
 
-  if (!open) return null;
-
-  const updateOrigin = (field: keyof LocationForm, value: string) => {
-    setOrigin((prev) => ({ ...prev, [field]: value }));
+  const updateOrigin = (location: IRouteLocation | null) => {
+    setOrigin(toLocationForm(location));
   };
 
-  const updateDestination = (field: keyof LocationForm, value: string) => {
-    setDestination((prev) => ({ ...prev, [field]: value }));
+  const updateDestination = (location: IRouteLocation | null) => {
+    setDestination(toLocationForm(location));
   };
 
-  const updateStop = (
+  const updateStopLocation = (
     index: number,
-    field: keyof StopForm,
-    value: string | boolean,
+    location: IRouteLocation | null,
+  ) => {
+    const updatedLocation = toLocationForm(location);
+
+    setStops((prev) =>
+      prev.map((stop, i) =>
+        i === index
+          ? {
+              ...stop,
+              ...updatedLocation,
+            }
+          : stop,
+      ),
+    );
+  };
+
+  const updateStopAccess = (
+    index: number,
+    field: "isBoardingPoint" | "isDroppingPoint",
+    value: boolean,
   ) => {
     setStops((prev) =>
       prev.map((stop, i) =>
-        i === index ? { ...stop, [field]: value } : stop,
+        i === index
+          ? {
+              ...stop,
+              [field]: value,
+            }
+          : stop,
       ),
     );
   };
@@ -225,7 +201,10 @@ const AddRouteModal = ({
     setStops((prev) =>
       prev
         .filter((_, i) => i !== index)
-        .map((stop, i) => ({ ...stop, order: i + 1 })),
+        .map((stop, i) => ({
+          ...stop,
+          order: i + 1,
+        })),
     );
   };
 
@@ -248,7 +227,7 @@ const AddRouteModal = ({
       location.latitude.trim() === "" ||
       location.longitude.trim() === ""
     ) {
-      toast.error(`Please complete all ${label} location fields`);
+      toast.error(`Please select a valid ${label} location`);
       return false;
     }
 
@@ -260,7 +239,7 @@ const AddRouteModal = ({
       latitude < -90 ||
       latitude > 90
     ) {
-      toast.error(`Please enter a valid ${label} latitude`);
+      toast.error(`Invalid ${label} latitude`);
       return false;
     }
 
@@ -269,15 +248,19 @@ const AddRouteModal = ({
       longitude < -180 ||
       longitude > 180
     ) {
-      toast.error(`Please enter a valid ${label} longitude`);
+      toast.error(`Invalid ${label} longitude`);
       return false;
     }
 
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e: FormEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
+
+    if (isSubmitting) return;
 
     if (routeName.trim().length < 3) {
       toast.error("Route name must contain at least 3 characters");
@@ -285,30 +268,46 @@ const AddRouteModal = ({
     }
 
     if (!validateLocation(origin, "origin")) return;
+
     if (!validateLocation(destination, "destination")) return;
 
-    if (origin.placeId.trim() === destination.placeId.trim()) {
-      toast.error("Origin and destination cannot be the same location");
+    if (origin.placeId === destination.placeId) {
+      toast.error(
+        "Origin and destination cannot be the same location",
+      );
       return;
     }
 
     const distance = Number(distanceKm);
-    const duration = Number(durationMinutes);
 
     if (!Number.isFinite(distance) || distance <= 0) {
       toast.error("Please enter a valid route distance");
       return;
     }
 
-    if (!Number.isFinite(duration) || duration <= 0) {
+    const hours = Number(durationHours || 0);
+    const minutes = Number(durationMinutes || 0);
+
+    if (
+      !Number.isInteger(hours) ||
+      !Number.isInteger(minutes) ||
+      hours < 0 ||
+      minutes < 0 ||
+      minutes > 59 ||
+      hours + minutes === 0
+    ) {
       toast.error("Please enter a valid estimated duration");
       return;
     }
 
+    const durationInSeconds = (hours * 60 + minutes) * 60;
+
     for (let i = 0; i < stops.length; i++) {
       const stop = stops[i];
 
-      if (!validateLocation(stop, `stop ${i + 1}`)) return;
+      if (!validateLocation(stop, `stop ${i + 1}`)) {
+        return;
+      }
 
       if (!stop.isBoardingPoint && !stop.isDroppingPoint) {
         toast.error(
@@ -318,31 +317,38 @@ const AddRouteModal = ({
       }
 
       const existingPlaceIds = [
-        origin.placeId.trim(),
-        destination.placeId.trim(),
+        origin.placeId,
+        destination.placeId,
         ...stops
           .filter((_, index) => index !== i)
-          .map((item) => item.placeId.trim()),
+          .map((item) => item.placeId),
       ];
 
-      if (existingPlaceIds.includes(stop.placeId.trim())) {
-        toast.error(`Stop ${i + 1} is already added to this route`);
+      if (existingPlaceIds.includes(stop.placeId)) {
+        toast.error(
+          `Stop ${i + 1} is already added to this route`,
+        );
         return;
       }
     }
 
     const payload = {
       routeName: routeName.trim(),
+
       origin: convertLocation(origin),
+
       destination: convertLocation(destination),
+
       stops: stops.map((stop, index) => ({
         ...convertLocation(stop),
         order: index + 1,
         isBoardingPoint: stop.isBoardingPoint,
         isDroppingPoint: stop.isDroppingPoint,
       })),
+
       distanceInMeters: Math.round(distance * 1000),
-      estimatedDurationInSeconds: Math.round(duration * 60),
+
+      estimatedDurationInSeconds: durationInSeconds,
     };
 
     try {
@@ -351,31 +357,41 @@ const AddRouteModal = ({
       await createRoute(payload);
 
       toast.success("Route created successfully");
+
       onCreated();
       onClose();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to create route",
+        error instanceof Error
+          ? error.message
+          : "Failed to create route",
       );
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (!open) return null;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-8"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget && !isSubmitting) onClose();
+        if (
+          e.target === e.currentTarget &&
+          !isSubmitting
+        ) {
+          onClose();
+        }
       }}
     >
       <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
           <div>
             <h2 className="text-lg font-semibold text-slate-800">
               Add New Route
             </h2>
+
             <p className="mt-1 text-xs text-slate-500">
               Create a route with origin, destination and intermediate stops
             </p>
@@ -385,19 +401,17 @@ const AddRouteModal = ({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Form Content */}
         <form
           onSubmit={handleSubmit}
           className="flex min-h-0 flex-1 flex-col"
         >
           <div className="space-y-6 overflow-y-auto px-6 py-6">
-            {/* Basic Information */}
             <section className="rounded-2xl border border-slate-200 p-5">
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -408,6 +422,7 @@ const AddRouteModal = ({
                   <h3 className="text-sm font-semibold text-slate-800">
                     Basic Information
                   </h3>
+
                   <p className="text-xs text-slate-400">
                     Give your route a recognizable name
                   </p>
@@ -425,41 +440,77 @@ const AddRouteModal = ({
               </Field>
             </section>
 
-            {/* Route Locations */}
             <section className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-slate-800">
                   Route Locations
                 </h3>
+
                 <p className="mt-1 text-xs text-slate-500">
-                  Define where the journey starts and ends
+                  Search and select your starting and ending locations
                 </p>
               </div>
 
-              <LocationFields
-                title="Origin"
-                location={origin}
-                onChange={updateOrigin}
-                accent="blue"
-              />
+              <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <MapPin size={18} />
+                  </div>
 
-              <LocationFields
-                title="Destination"
-                location={destination}
-                onChange={updateDestination}
-                accent="red"
-              />
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-800">
+                      Origin
+                    </h4>
+
+                    <p className="text-xs text-slate-400">
+                      Starting location
+                    </p>
+                  </div>
+                </div>
+
+                <RouteLocationPicker
+                  label="Search Origin"
+                  value={toPickerLocation(origin)}
+                  onChange={updateOrigin}
+                  placeholder="Search starting location..."
+                />
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                    <MapPin size={18} />
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-800">
+                      Destination
+                    </h4>
+
+                    <p className="text-xs text-slate-400">
+                      Ending location
+                    </p>
+                  </div>
+                </div>
+
+                <RouteLocationPicker
+                  label="Search Destination"
+                  value={toPickerLocation(destination)}
+                  onChange={updateDestination}
+                  placeholder="Search destination..."
+                />
+              </div>
             </section>
 
-            {/* Intermediate Stops */}
             <section className="rounded-2xl border border-slate-200 p-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-800">
                     Intermediate Stops
                   </h3>
+
                   <p className="mt-1 text-xs text-slate-500">
-                    Add boarding and dropping points along the route
+                    Add passenger boarding and dropping locations
                   </p>
                 </div>
 
@@ -475,13 +526,17 @@ const AddRouteModal = ({
 
               {stops.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
-                  <MapPin className="mx-auto mb-2 text-slate-400" size={22} />
+                  <MapPin
+                    className="mx-auto mb-2 text-slate-400"
+                    size={22}
+                  />
+
                   <p className="text-sm font-medium text-slate-600">
                     No intermediate stops added
                   </p>
+
                   <p className="mt-1 text-xs text-slate-400">
-                    Add stops if passengers can board or drop off between the
-                    origin and destination
+                    Add stops where passengers can board or drop off
                   </p>
                 </div>
               ) : (
@@ -512,69 +567,14 @@ const AddRouteModal = ({
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Field label="Location Name" required>
-                          <input
-                            className={inputClass}
-                            placeholder="e.g. Thrissur"
-                            value={stop.name}
-                            onChange={(e) =>
-                              updateStop(index, "name", e.target.value)
-                            }
-                          />
-                        </Field>
-
-                        <Field label="Google Place ID" required>
-                          <input
-                            className={inputClass}
-                            placeholder="Enter place ID"
-                            value={stop.placeId}
-                            onChange={(e) =>
-                              updateStop(index, "placeId", e.target.value)
-                            }
-                          />
-                        </Field>
-
-                        <div className="sm:col-span-2">
-                          <Field label="Full Address" required>
-                            <textarea
-                              rows={2}
-                              className={textareaClass}
-                              placeholder="Enter the complete address"
-                              value={stop.address}
-                              onChange={(e) =>
-                                updateStop(index, "address", e.target.value)
-                              }
-                            />
-                          </Field>
-                        </div>
-
-                        <Field label="Latitude" required>
-                          <input
-                            type="number"
-                            step="any"
-                            className={inputClass}
-                            placeholder="Latitude"
-                            value={stop.latitude}
-                            onChange={(e) =>
-                              updateStop(index, "latitude", e.target.value)
-                            }
-                          />
-                        </Field>
-
-                        <Field label="Longitude" required>
-                          <input
-                            type="number"
-                            step="any"
-                            className={inputClass}
-                            placeholder="Longitude"
-                            value={stop.longitude}
-                            onChange={(e) =>
-                              updateStop(index, "longitude", e.target.value)
-                            }
-                          />
-                        </Field>
-                      </div>
+                      <RouteLocationPicker
+                        label={`Search Stop ${index + 1}`}
+                        value={toPickerLocation(stop)}
+                        onChange={(location) =>
+                          updateStopLocation(index, location)
+                        }
+                        placeholder={`Search stop ${index + 1} location...`}
+                      />
 
                       <div className="mt-4 border-t border-slate-200 pt-4">
                         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -587,7 +587,7 @@ const AddRouteModal = ({
                               type="checkbox"
                               checked={stop.isBoardingPoint}
                               onChange={(e) =>
-                                updateStop(
+                                updateStopAccess(
                                   index,
                                   "isBoardingPoint",
                                   e.target.checked,
@@ -595,6 +595,7 @@ const AddRouteModal = ({
                               }
                               className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                             />
+
                             Boarding Point
                           </label>
 
@@ -603,7 +604,7 @@ const AddRouteModal = ({
                               type="checkbox"
                               checked={stop.isDroppingPoint}
                               onChange={(e) =>
-                                updateStop(
+                                updateStopAccess(
                                   index,
                                   "isDroppingPoint",
                                   e.target.checked,
@@ -611,6 +612,7 @@ const AddRouteModal = ({
                               }
                               className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                             />
+
                             Dropping Point
                           </label>
                         </div>
@@ -621,14 +623,14 @@ const AddRouteModal = ({
               )}
             </section>
 
-            {/* Distance and Duration */}
             <section className="rounded-2xl border border-slate-200 p-5">
               <div className="mb-4">
                 <h3 className="text-sm font-semibold text-slate-800">
                   Route Details
                 </h3>
+
                 <p className="mt-1 text-xs text-slate-500">
-                  Provide the estimated journey distance and duration
+                  Enter estimated journey distance and duration
                 </p>
               </div>
 
@@ -639,6 +641,7 @@ const AddRouteModal = ({
                       size={16}
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                     />
+
                     <input
                       type="number"
                       min="0.1"
@@ -646,45 +649,72 @@ const AddRouteModal = ({
                       className={`${inputClass} pl-9 pr-12`}
                       placeholder="e.g. 350"
                       value={distanceKm}
-                      onChange={(e) => setDistanceKm(e.target.value)}
+                      onChange={(e) =>
+                        setDistanceKm(e.target.value)
+                      }
                     />
+
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
                       KM
                     </span>
                   </div>
                 </Field>
 
-                <Field label="Estimated Duration (Minutes)" required>
-                  <div className="relative">
-                    <Clock
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      className={`${inputClass} pl-9 pr-16`}
-                      placeholder="e.g. 480"
-                      value={durationMinutes}
-                      onChange={(e) => setDurationMinutes(e.target.value)}
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                      MINS
-                    </span>
+                <Field label="Estimated Duration" required>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="relative">
+                      <Clock
+                        size={16}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        className={`${inputClass} pl-9 pr-14`}
+                        placeholder="Hours"
+                        value={durationHours}
+                        onChange={(e) =>
+                          setDurationHours(e.target.value)
+                        }
+                      />
+
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        HRS
+                      </span>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        step="1"
+                        className={`${inputClass} pr-14`}
+                        placeholder="Minutes"
+                        value={durationMinutes}
+                        onChange={(e) =>
+                          setDurationMinutes(e.target.value)
+                        }
+                      />
+
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        MINS
+                      </span>
+                    </div>
                   </div>
                 </Field>
               </div>
             </section>
           </div>
 
-          {/* Footer */}
           <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-6 py-4 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
             >
               Cancel
             </button>

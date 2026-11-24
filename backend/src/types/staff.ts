@@ -5,6 +5,7 @@ export type StaffRole = "driver" | "conductor";
 export type StaffStatus = "on-duty" | "off-duty";
 
 export interface IStaff {
+    _id?: Types.ObjectId;
     operatorId: Types.ObjectId;
 
     fullName: string;

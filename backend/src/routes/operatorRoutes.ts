@@ -8,6 +8,8 @@ import { OperatorController } from "../controller/operator/implementation/Operat
 import { SeatLayoutController } from "../controller/operator/seatLayout/implementation/SeatLayoutController";
 import { BusController } from "../controller/operator/Bus/implimentation/BusController";
 import { RouteController } from "../controller/operator/Route/implementation/RouteController";
+ 
+import { TripScheduleController } from "../controller/operator/tripSchedule/implementation/TripScheduleController";
 
 const router = Router();
 
@@ -24,7 +26,8 @@ const seatLayoutController = container.get<SeatLayoutController>(
 const busController = container.get<BusController>(TYPES.BusController);
 
 const routeController = container.get<RouteController>(TYPES.RouteController);
-
+ 
+const tripScheduleController = container.get<TripScheduleController>(TYPES.TripScheduleController)
 router.post(
   "/staffRegister",
   upload.fields([
@@ -57,7 +60,7 @@ router.patch(
   operatorController.resubmitOperator,
 );
 
-// seatLAyouts
+ 
 
 router.get(
   "/seatLayouts",
@@ -70,7 +73,7 @@ router.get(
   seatLayoutController.getLayoutById,
 );
 
-//Bus Routes
+ 
 
 router.post(
   "/createBus",
@@ -102,47 +105,80 @@ router.delete(
 );
 
 
-// ================= ROUTE MANAGEMENT =================
-
-// CREATE ROUTE
+ 
 router.post(
   "/createRoute",
   authMiddleware,
   routeController.createRoute,
 );
 
-// GET ALL ROUTES
+ 
 router.get(
   "/getRoutes",
   authMiddleware,
   routeController.getRoutes,
 );
 
-// GET ROUTE BY ID
+ 
 router.get(
   "/getRoute/:routeId",
   authMiddleware,
   routeController.getRouteById,
 );
 
-// UPDATE ROUTE
+ 
 router.patch(
   "/updateRoute/:routeId",
   authMiddleware,
   routeController.updateRoute,
 );
 
-// DELETE ROUTE
+ 
 router.delete(
   "/deleteRoute/:routeId",
   authMiddleware,
   routeController.deleteRoute,
 );
 
-// UPDATE ROUTE STATUS
+ 
 router.patch(
   "/updateRouteStatus/:routeId",
   authMiddleware,
   routeController.updateRouteStatus,
 );
+
+ 
+ 
+
+router.post(
+  "/trip-schedules",
+  authMiddleware,
+  tripScheduleController.createSchedule
+);
+
+router.get(
+  "/trip-schedules",
+  authMiddleware,
+  tripScheduleController.getSchedules
+);
+
+router.get(
+  "/trip-schedules/:scheduleId",
+  authMiddleware,
+  tripScheduleController.getScheduleById
+);
+
+router.patch(
+  "/trip-schedules/:scheduleId",
+  authMiddleware,
+  tripScheduleController.updateSchedule
+);
+
+router.delete(
+  "/trip-schedules/:scheduleId",
+  authMiddleware,
+  tripScheduleController.deleteSchedule
+);
+
+
 export default router;
